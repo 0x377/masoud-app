@@ -42,7 +42,6 @@ export default function Layout() {
       {/* Header */}
       <header className="header">
         <div className="container header-container">
-
           <div className="logo-section">
             <div className="logo">
               <span className="logo-icon">
@@ -64,9 +63,7 @@ export default function Layout() {
                     >
                       الملف الشخصي
                     </button>
-                    <button className="btn-logout">
-                      تسجيل الخروج
-                    </button>
+                    <button className="btn-logout">تسجيل الخروج</button>
                   </>
                 ) : (
                   <>
@@ -192,9 +189,7 @@ export default function Layout() {
                         <span className="action-icon">⚙️</span>
                         <span>الإعدادات</span>
                       </button>
-                      <button
-                        className="sidebar-action-btn logout-btn"
-                      >
+                      <button className="sidebar-action-btn logout-btn">
                         <span className="action-icon">🚪</span>
                         <span>تسجيل الخروج</span>
                       </button>
@@ -253,6 +248,29 @@ export default function Layout() {
           {/* Main Content Area */}
           <section className="content-area">
             <Outlet />
+            {/* Additional Info Cards */}
+            <div className="cards-grid">
+              <div className="info-card">
+                <div className="info-card-header">
+                  <span className="info-icon">📅</span>
+                  <h4>الفعاليات القادمة</h4>
+                </div>
+                <div className="info-card-body">
+                  <p>ورشة عمل حول السلامة الغذائية - 15 ديسمبر 2024</p>
+                  <p>المؤتمر السنوي للجودة - 20 يناير 2025</p>
+                </div>
+              </div>
+              <div className="info-card">
+                <div className="info-card-header">
+                  <span className="info-icon">📞</span>
+                  <h4>اتصل بنا</h4>
+                </div>
+                <div className="info-card-body">
+                  <p>هاتف: 8001234567</p>
+                  <p>البريد الإلكتروني: info@masoud.com</p>
+                </div>
+              </div>
+            </div>
           </section>
         </div>
       </main>
