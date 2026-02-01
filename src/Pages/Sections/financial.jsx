@@ -1,33 +1,27 @@
 export default function Financial() {
+  const data = {
+    title: "المدير المالي",
+    description: "المدير المالي والحسابات البنكية",
+    icon: "💰",
+    content:
+      "إدارة الشؤون المالية للعائلة والمتابعة المالية للحسابات البنكية والاستثمارات والمصروفات.",
+  };
+
   return (
     <>
       <div className="content-header">
         <div className="section-title">
-          <span className="section-icon">
-            {sections[activeSection]?.icon || "💰"}
-          </span>
+          <span className="section-icon">{data.icon}</span>
           <div>
-            <h2>{sections[activeSection]?.title || "التبرعات"}</h2>
-            <p className="section-description">
-              {sections[activeSection]?.description ||
-                "معلومات شاملة حول السلامة الغذائية والمعايير المطبقة"}
-            </p>
+            <h2>{data.title}</h2>
+            <p className="section-description">{data.description}</p>
           </div>
         </div>
       </div>
 
       <div className="content-card">
         <div className="content-body">
-          <p className="section-description">
-            <h3>حسابات الاسرة المعتمدة</h3>
-            {bankAccounts.map((ba, index) => (
-              <p className="p1" key={index}>
-                {ba.label}
-                <br />
-                <span>{ba.value}</span>
-              </p>
-            ))}
-          </p>
+          <div className="section-description">{/* content page */}</div>
         </div>
       </div>
     </>

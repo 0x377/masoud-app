@@ -37,6 +37,13 @@ export default function Layout() {
     alert("تم تسجيل الخروج");
   };
 
+  const redirectPublicPath = (section) => {
+    if (!isAuthenticated && !section.public)
+      navigate('/login');
+    else
+      navigate(section.path);
+  };
+
   return (
     <div className={`app ${isDarkMode ? "dark" : "light"}`}>
       {/* Header */}
@@ -145,8 +152,9 @@ export default function Layout() {
                       <button
                         className={`sidebar-nav-link ${activeSection === section ? "active" : ""}`}
                         onClick={() => {
-                          setActiveSection(section);
+                          setActiveSection(section)
                           setMobileMenuOpen(false);
+                          redirectPublicPath(section);
                         }}
                       >
                         <span className="sidebar-nav-icon">
@@ -233,6 +241,7 @@ export default function Layout() {
                       onClick={() => {
                         setActiveSection(section);
                         if (window.innerWidth < 992) setMobileMenuOpen(false);
+                        redirectPublicPath(section);
                       }}
                     >
                       <span className="nav-icon">{sections[section].icon}</span>

@@ -1,8 +1,9 @@
-import { useState } from "react";
-import { sectionPages as sections } from "../../data/sections";
-
 export default function Donation() {
-  const [activeSection, setActiveSection] = useState("منصة التبرعات");
+  const data = {
+    title: "منصة التبرعات",
+    description: "منصة تبرعات مفتوحة للجميع",
+    icon: "💳",
+  };
 
   const bankAccounts = [
     { label: "الحساب العام", value: "SA3180000252608013271122" },
@@ -14,22 +15,17 @@ export default function Donation() {
     <>
       <div className="content-header">
         <div className="section-title">
-          <span className="section-icon">
-            {sections[activeSection]?.icon || "💰"}
-          </span>
+          <span className="section-icon">{data.icon}</span>
           <div>
-            <h2>{sections[activeSection]?.title || "التبرعات"}</h2>
-            <p className="section-description">
-              {sections[activeSection]?.description ||
-                "معلومات شاملة حول السلامة الغذائية والمعايير المطبقة"}
-            </p>
+            <h2>{data.title}</h2>
+            <p className="section-description">{data.description}</p>
           </div>
         </div>
       </div>
 
       <div className="content-card">
         <div className="content-body">
-          <p className="section-description">
+          <div className="section-description">
             <h3>حسابات الاسرة المعتمدة</h3>
             {bankAccounts.map((ba, index) => (
               <p className="p1" key={index}>
@@ -38,7 +34,7 @@ export default function Donation() {
                 <span>{ba.value}</span>
               </p>
             ))}
-          </p>
+          </div>
         </div>
       </div>
     </>
