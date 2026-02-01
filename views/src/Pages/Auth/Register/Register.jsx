@@ -36,7 +36,7 @@ const Register = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [errors, setErrors] = useState({});
   const [passwordStrength, setPasswordStrength] = useState(0);
-  const [step, setStep] = useState(2);
+  const [step, setStep] = useState(1);
   const [touched, setTouched] = useState({});
   const [verificationSent, setVerificationSent] = useState(false);
 
