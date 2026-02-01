@@ -29,6 +29,19 @@ import FamilyRelationship from "./familytree/FamilyRelationship.js";
 import FamilyTree from "./familytree/FamilyTree.js";
 import FamilyTreeNode from "./familytree/FamilyTreeNode.js";
 
+// Executive
+import ExecutiveCommittee from "./executive/ExecutiveCommittee.js";
+import ExecutiveDocument from "./executive/ExecutiveDocument.js";
+import ExecutiveManagement from "./executive/ExecutiveManagement.js";
+import ExecutivePosition from "./executive/ExecutivePosition.js";
+
+// Reconciliation
+import ReconciliationCommittee from "./reconciliation/ReconciliationCommittee.js";
+import ReconciliationReport from "./reconciliation/ReconciliationReport.js";
+import ReconciliationCase from "./reconciliation/ReconciliationCase.js";
+import CaseSession from "./reconciliation/CaseSession.js";
+import CaseDocument from "./reconciliation/CaseDocument.js";
+
 // Export all models
 export {
   db,
@@ -53,6 +66,15 @@ export {
   FamilyTree,
   FamilyTreeNode,
   FamilyRelationship,
+  ExecutiveCommittee,
+  ExecutiveManagement,
+  ExecutiveDocument,
+  ExecutivePosition,
+  ReconciliationCommittee,
+  ReconciliationReport,
+  ReconciliationCase,
+  CaseDocument,
+  CaseSession,
 };
 
 // Export default with all models
@@ -79,4 +101,13 @@ export default {
   FamilyTree,
   FamilyTreeNode,
   FamilyRelationship,
+  ExecutiveCommittee,
+  ExecutiveManagement,
+  ExecutiveDocument,
+  ExecutivePosition,
+  ReconciliationCommittee,
+  ReconciliationReport,
+  ReconciliationCase,
+  CaseDocument,
+  CaseSession,
 };
