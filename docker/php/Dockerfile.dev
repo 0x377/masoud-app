@@ -1,0 +1,108 @@
+# Development Dockerfile for Laravel with Xdebug
+FROM php:8.3-fpm
+
+# Arguments
+ARG USER_ID=1000
+ARG GROUP_ID=1000
+
+# Environment Variables
+ENV COMPOSER_ALLOW_SUPERUSER=1
+ENV COMPOSER_MEMORY_LIMIT=-1
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    git \
+    curl \
+    libpng-dev \
+    libjpeg-dev \
+    libfreetype6-dev \
+    libonig-dev \
+    libxml2-dev \
+    libzip-dev \
+    zip \
+    unzip \
+    libpq-dev \
+    libicu-dev \
+    librabbitmq-dev \
+    default-mysql-client \
+    nano \
+    vim \
+    htop \
+    supervisor \
+    cron \
+    procps \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install PHP extensions
+RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
+    && docker-php-ext-install \
+        pdo \
+        pdo_mysql \
+        pdo_pgsql \
+        mysqli \
+        bcmath \
+        exif \
+        gd \
+        intl \
+        mbstring \
+        pcntl \
+        zip \
+        sockets \
+        opcache
+
+# Install PECL extensions
+RUN pecl install \
+    redis \
+    amqp \
+    xdebug \
+    && docker-php-ext-enable \
+        redis \
+        amqp \
+        xdebug
+
+# Install Composer
+COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+
+# Create user and group
+RUN groupadd -g ${GROUP_ID} laravel \
+    && useradd -u ${USER_ID} -g laravel -m laravel \
+    && usermod -a -G www-data laravel
+
+# Install Node.js and npm (لـ Laravel Mix/Vite)
+RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
+    && apt-get install -y nodejs \
+    && npm install -g npm@latest
+
+# Install Yarn
+RUN npm install -g yarn
+
+# Configure PHP
+COPY php.ini-development /usr/local/etc/php/php.ini
+
+# Create directories and set permissions
+RUN mkdir -p /var/www/html \
+    && mkdir -p /home/laravel/.composer \
+    && mkdir -p /home/laravel/.npm \
+    && chown -R laravel:laravel /var/www/html \
+    && chown -R laravel:laravel /home/laravel
+
+# Copy entrypoint script
+COPY docker/php/entrypoint.dev.sh /usr/local/bin/entrypoint.sh
+RUN chmod +x /usr/local/bin/entrypoint.sh
+
+# Switch to laravel user
+USER laravel
+
+# Set working directory
+WORKDIR /var/www/html
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+    CMD php -v || exit 1
+
+# Entrypoint
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
+
+# Default command
+CMD ["php-fpm"]

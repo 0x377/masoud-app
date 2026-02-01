@@ -1,0 +1,100 @@
+/* CSS Reset and Base Styles */
+@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800;900&family=Tajawal:wght@300;400;500;700&display=swap');
+
+:root {
+  /* Dark Green Color Palette */
+  --dark-green-primary: #0d2418;
+  --dark-green-secondary: #1a472a;
+  --dark-green-accent: #2e8b57;
+  --dark-green-light: #3cb371;
+  --dark-green-lighter: #50c878;
+  --dark-green-dark: #0a1a12;
+
+  /* Supporting Colors */
+  --gold-primary: #d4af37;
+  --gold-secondary: #f2c94c;
+  --gold-accent: #ffd700;
+
+  /* Neutral Colors */
+  --gray-50: #fafafa;
+  --gray-100: #f5f5f5;
+  --gray-200: #e5e5e5;
+  --gray-300: #d4d4d4;
+  --gray-400: #a3a3a3;
+  --gray-500: #737373;
+  --gray-600: #525252;
+  --gray-700: #404040;
+  --gray-800: #262626;
+  --gray-900: #171717;
+
+  /* Gradients */
+  --gradient-dark-green: linear-gradient(135deg, var(--dark-green-primary) 0%, var(--dark-green-secondary) 100%);
+  --gradient-gold: linear-gradient(135deg, var(--gold-primary) 0%, var(--gold-accent) 100%);
+  --gradient-green-gold: linear-gradient(135deg, var(--dark-green-accent) 0%, var(--gold-primary) 100%);
+
+  /* Shadows */
+  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 8px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 10px 20px rgba(0, 0, 0, 0.5);
+  --shadow-xl: 0 20px 40px rgba(0, 0, 0, 0.6);
+  --shadow-inner: inset 0 2px 4px rgba(0, 0, 0, 0.3);
+
+  /* Border Radius */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+  --radius-full: 9999px;
+
+  /* Transitions */
+  --transition-fast: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-normal: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow: 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* Typography */
+  --font-heading: 'Cairo', sans-serif;
+  --font-body: 'Tajawal', sans-serif;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  border: none;
+  border-radius: 0;
+  background: none;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: var(--font-body);
+  background: var(--dark-green-primary);
+  color: var(--gray-100);
+  line-height: 1.6;
+  direction: rtl;
+  overflow-x: hidden;
+  min-height: 100vh;
+  background-image: 
+    radial-gradient(circle at 20% 80%, rgba(46, 139, 87, 0.1) 0%, transparent 20%),
+    radial-gradient(circle at 80% 20%, rgba(212, 175, 55, 0.05) 0%, transparent 20%);
+}
+
+.root {
+  width: 100vw;
+  height: 100vh;
+}
+
+.content {
+  display: flex;
+  flex-direction: row;
+  width: 100%;
+  height: 100%;
+  padding: 10px 0px;
+}
+
+
+
+
