@@ -46,7 +46,7 @@ const Login = () => {
     if (!password) {
       errors.password = "كلمة المرور مطلوبة";
     } else if (password.length < 6) {
-      errors.password = "كلمة المرور يجب أن تكون على الأقل 6 أحرف";
+      errors.password = "كلمة المرور يجب أن تكون على الأقل 8 أحرف";
     }
 
     setValidationErrors(errors);

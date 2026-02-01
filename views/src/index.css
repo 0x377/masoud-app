@@ -1,5 +1,5 @@
 /* CSS Reset and Base Styles */
-@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800;900&family=Tajawal:wght@300;400;500;700&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800;900&family=Tajawal:wght@300;400;500;700&display=swap");
 
 :root {
   /* Dark Green Color Palette */
@@ -28,9 +28,21 @@
   --gray-900: #171717;
 
   /* Gradients */
-  --gradient-dark-green: linear-gradient(135deg, var(--dark-green-primary) 0%, var(--dark-green-secondary) 100%);
-  --gradient-gold: linear-gradient(135deg, var(--gold-primary) 0%, var(--gold-accent) 100%);
-  --gradient-green-gold: linear-gradient(135deg, var(--dark-green-accent) 0%, var(--gold-primary) 100%);
+  --gradient-dark-green: linear-gradient(
+    135deg,
+    var(--dark-green-primary) 0%,
+    var(--dark-green-secondary) 100%
+  );
+  --gradient-gold: linear-gradient(
+    135deg,
+    var(--gold-primary) 0%,
+    var(--gold-accent) 100%
+  );
+  --gradient-green-gold: linear-gradient(
+    135deg,
+    var(--dark-green-accent) 0%,
+    var(--gold-primary) 100%
+  );
 
   /* Shadows */
   --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.3);
@@ -52,8 +64,8 @@
   --transition-slow: 0.5s cubic-bezier(0.4, 0, 0.2, 1);
 
   /* Typography */
-  --font-heading: 'Cairo', sans-serif;
-  --font-body: 'Tajawal', sans-serif;
+  --font-heading: "Cairo", sans-serif;
+  --font-body: "Tajawal", sans-serif;
 }
 
 * {
@@ -63,6 +75,8 @@
   border: none;
   border-radius: 0;
   background: none;
+  overflow: hidden;
+  user-select: none;
 }
 
 html {
@@ -77,9 +91,17 @@ body {
   direction: rtl;
   overflow-x: hidden;
   min-height: 100vh;
-  background-image: 
-    radial-gradient(circle at 20% 80%, rgba(46, 139, 87, 0.1) 0%, transparent 20%),
-    radial-gradient(circle at 80% 20%, rgba(212, 175, 55, 0.05) 0%, transparent 20%);
+  background-image:
+    radial-gradient(
+      circle at 20% 80%,
+      rgba(46, 139, 87, 0.1) 0%,
+      transparent 20%
+    ),
+    radial-gradient(
+      circle at 80% 20%,
+      rgba(212, 175, 55, 0.05) 0%,
+      transparent 20%
+    );
 }
 
 .root {
@@ -94,7 +116,3 @@ body {
   height: 100%;
   padding: 10px 0px;
 }
-
-
-
-

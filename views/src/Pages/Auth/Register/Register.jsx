@@ -1,300 +1,342 @@
-import React, { useState, useEffect } from 'react';
-import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { useAuth } from '../../../Hooks/useAuth'; // Updated path for Redux hook
-import { 
-  User, Mail, Lock, Phone, Eye, EyeOff, 
-  AlertCircle, CheckCircle, Building, Check,
-  Shield
-} from 'lucide-react';
-import './Register.css';
+import React, { useState, useEffect } from "react";
+import { Link, useNavigate, useLocation } from "react-router-dom";
+import { useAuth } from "../../../Hooks/useAuth"; // Updated path for Redux hook
+import {
+  User,
+  Mail,
+  Lock,
+  Phone,
+  Eye,
+  EyeOff,
+  AlertCircle,
+  CheckCircle,
+  Building,
+  Check,
+  Shield,
+} from "lucide-react";
+import "./Register.css";
 
 const Register = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [formData, setFormData] = useState({
-    firstName: '',
-    lastName: '',
-    email: '',
-    phone: '',
-    company: '',
-    password: '',
-    confirmPassword: '',
+    firstName: "",
+    lastName: "",
+    fullName: "",
+    email: "",
+    phone: "",
+    company: "",
+    password: "",
+    confirmPassword: "",
     agreeToTerms: false,
-    receiveUpdates: true
+    receiveUpdates: true,
   });
-  
+
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [errors, setErrors] = useState({});
   const [passwordStrength, setPasswordStrength] = useState(0);
-  const [step, setStep] = useState(1);
+  const [step, setStep] = useState(2);
   const [touched, setTouched] = useState({});
   const [verificationSent, setVerificationSent] = useState(false);
-  
+
   // Use Redux auth hook instead of context
-  const { 
-    register: registerUser, 
-    isLoading, 
-    error: authError, 
+  const {
+    register: registerUser,
+    isLoading,
+    error: authError,
     clearError,
-    isAuthenticated 
+    isAuthenticated,
   } = useAuth();
-  
+
   // Clear auth errors on component mount
   useEffect(() => {
     clearError();
-    
+
     // If already authenticated, redirect
     if (isAuthenticated) {
-      const from = location.state?.from || '/dashboard';
+      const from = location.state?.from || "/dashboard";
       navigate(from, { replace: true });
     }
   }, [clearError, isAuthenticated, navigate, location]);
 
   // Parse any redirect from location state
-  const from = location.state?.from || '/dashboard';
+  const from = location.state?.from || "/dashboard";
 
   const handleBlur = (field) => {
-    setTouched(prev => ({ ...prev, [field]: true }));
-    
+    setTouched((prev) => ({ ...prev, [field]: true }));
+
     // Validate field on blur
-    if (field === 'email' || field === 'phone' || field === 'firstName' || field === 'lastName') {
+    if (
+      field === "email" ||
+      field === "phone" ||
+      field === "firstName" ||
+      field === "lastName"
+    ) {
       validateField(field, formData[field]);
     }
   };
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
-    const newValue = type === 'checkbox' ? checked : value;
-    
-    setFormData(prev => ({
+    const newValue = type === "checkbox" ? checked : value;
+
+    setFormData((prev) => ({
       ...prev,
-      [name]: newValue
+      [name]: newValue,
     }));
 
     // Mark field as touched
-    setTouched(prev => ({ ...prev, [name]: true }));
+    setTouched((prev) => ({ ...prev, [name]: true }));
 
     // Calculate password strength
-    if (name === 'password') {
+    if (name === "password") {
       calculatePasswordStrength(newValue);
-      
+
       // Validate confirm password if password changes
       if (formData.confirmPassword) {
         validateConfirmPassword(newValue, formData.confirmPassword);
       }
     }
-    
+
     // Validate confirm password when it changes
-    if (name === 'confirmPassword' && formData.password) {
+    if (name === "confirmPassword" && formData.password) {
       validateConfirmPassword(formData.password, newValue);
     }
 
     // Clear error for this field
     if (errors[name]) {
-      setErrors(prev => ({ ...prev, [name]: '' }));
+      setErrors((prev) => ({ ...prev, [name]: "" }));
     }
 
     // Clear general errors
     if (errors.general) {
-      setErrors(prev => ({ ...prev, general: '' }));
+      setErrors((prev) => ({ ...prev, general: "" }));
     }
   };
 
   const validateField = (field, value) => {
-    let error = '';
-    
-    switch(field) {
-      case 'firstName':
+    let error = "";
+
+    switch (field) {
+      case "firstName":
         if (!value.trim()) {
-          error = 'الاسم الأول مطلوب';
+          error = "الاسم الأول مطلوب";
         } else if (value.trim().length < 2) {
-          error = 'الاسم الأول يجب أن يكون على الأقل حرفين';
-        } else if (!/^[\u0600-\u06FF\s]+$/.test(value.trim()) && 
-                   !/^[A-Za-z\s]+$/.test(value.trim())) {
-          error = 'الاسم يجب أن يحتوي على أحرف عربية أو إنجليزية فقط';
+          error = "الاسم الأول يجب أن يكون على الأقل حرفين";
+        } else if (
+          !/^[\u0600-\u06FF\s]+$/.test(value.trim()) &&
+          !/^[A-Za-z\s]+$/.test(value.trim())
+        ) {
+          error = "الاسم يجب أن يحتوي على أحرف عربية أو إنجليزية فقط";
         }
         break;
-        
-      case 'lastName':
+
+      case "lastName":
         if (!value.trim()) {
-          error = 'اسم العائلة مطلوب';
+          error = "اسم العائلة مطلوب";
         } else if (value.trim().length < 2) {
-          error = 'اسم العائلة يجب أن يكون على الأقل حرفين';
-        } else if (!/^[\u0600-\u06FF\s]+$/.test(value.trim()) && 
-                   !/^[A-Za-z\s]+$/.test(value.trim())) {
-          error = 'اسم العائلة يجب أن يحتوي على أحرف عربية أو إنجليزية فقط';
+          error = "اسم العائلة يجب أن يكون على الأقل حرفين";
+        } else if (
+          !/^[\u0600-\u06FF\s]+$/.test(value.trim()) &&
+          !/^[A-Za-z\s]+$/.test(value.trim())
+        ) {
+          error = "اسم العائلة يجب أن يحتوي على أحرف عربية أو إنجليزية فقط";
         }
         break;
-        
-      case 'email':
+
+      case "fullName":
         if (!value.trim()) {
-          error = 'البريد الإلكتروني مطلوب';
+          error = "اسم العائلة مطلوب";
+        } else if (value.trim().length < 2) {
+          error = "اسم العائلة يجب أن يكون على الأقل حرفين";
+        } else if (
+          !/^[\u0600-\u06FF\s]+$/.test(value.trim()) &&
+          !/^[A-Za-z\s]+$/.test(value.trim())
+        ) {
+          error = "اسم العائلة يجب أن يحتوي على أحرف عربية أو إنجليزية فقط";
+        }
+        break;
+
+      case "email":
+        if (!value.trim()) {
+          error = "البريد الإلكتروني مطلوب";
         } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
-          error = 'البريد الإلكتروني غير صحيح';
+          error = "البريد الإلكتروني غير صحيح";
         } else if (value.length > 100) {
-          error = 'البريد الإلكتروني طويل جداً';
+          error = "البريد الإلكتروني طويل جداً";
         }
         break;
-        
-      case 'phone':
+
+      case "phone":
         if (!value.trim()) {
-          error = 'رقم الهاتف مطلوب';
+          error = "رقم الهاتف مطلوب";
         } else {
-          const cleanedPhone = value.replace(/\s/g, '');
+          const cleanedPhone = value.replace(/\s/g, "");
           if (!/^[\+]?[1-9][\d]{9,14}$/.test(cleanedPhone)) {
-            error = 'رقم الهاتف غير صحيح (مثال: +966501234567)';
-          } else if (!cleanedPhone.startsWith('+')) {
-            error = 'يرجى إضافة رمز الدولة (مثال: +966)';
+            error = "رقم الهاتف غير صحيح (مثال: +966501234567)";
+          } else if (!cleanedPhone.startsWith("+")) {
+            error = "يرجى إضافة رمز الدولة (مثال: +966)";
           }
         }
         break;
-        
-      case 'password':
+
+      case "password":
         if (!value) {
-          error = 'كلمة المرور مطلوبة';
+          error = "كلمة المرور مطلوبة";
         } else if (value.length < 8) {
-          error = 'كلمة المرور يجب أن تكون 8 أحرف على الأقل';
+          error = "كلمة المرور يجب أن تكون 8 أحرف على الأقل";
         } else if (!/(?=.*[a-z])/.test(value)) {
-          error = 'يجب أن تحتوي على حرف صغير واحد على الأقل';
+          error = "يجب أن تحتوي على حرف صغير واحد على الأقل";
         } else if (!/(?=.*[A-Z])/.test(value)) {
-          error = 'يجب أن تحتوي على حرف كبير واحد على الأقل';
+          error = "يجب أن تحتوي على حرف كبير واحد على الأقل";
         } else if (!/(?=.*\d)/.test(value)) {
-          error = 'يجب أن تحتوي على رقم واحد على الأقل';
+          error = "يجب أن تحتوي على رقم واحد على الأقل";
         } else if (!/(?=.*[@$!%*?&])/.test(value)) {
-          error = 'يجب أن تحتوي على رمز خاص واحد على الأقل (@$!%*?&)';
-        } else if (value.includes(' ')) {
-          error = 'كلمة المرور يجب ألا تحتوي على مسافات';
+          error = "يجب أن تحتوي على رمز خاص واحد على الأقل (@$!%*?&)";
+        } else if (value.includes(" ")) {
+          error = "كلمة المرور يجب ألا تحتوي على مسافات";
         }
         break;
     }
-    
+
     if (error) {
-      setErrors(prev => ({ ...prev, [field]: error }));
+      setErrors((prev) => ({ ...prev, [field]: error }));
     } else if (errors[field]) {
       const newErrors = { ...errors };
       delete newErrors[field];
       setErrors(newErrors);
     }
-    
+
     return !error;
   };
 
   const validateConfirmPassword = (password, confirmPassword) => {
-    let error = '';
-    
+    let error = "";
+
     if (!confirmPassword) {
-      error = 'تأكيد كلمة المرور مطلوب';
+      error = "تأكيد كلمة المرور مطلوب";
     } else if (password !== confirmPassword) {
-      error = 'كلمات المرور غير متطابقة';
+      error = "كلمات المرور غير متطابقة";
     }
-    
+
     if (error) {
-      setErrors(prev => ({ ...prev, confirmPassword: error }));
+      setErrors((prev) => ({ ...prev, confirmPassword: error }));
     } else if (errors.confirmPassword) {
       const newErrors = { ...errors };
       delete newErrors.confirmPassword;
       setErrors(newErrors);
     }
-    
+
     return !error;
   };
 
   const calculatePasswordStrength = (password) => {
     let strength = 0;
-    
+
     // Length
     if (password.length >= 8) strength += 20;
     if (password.length >= 12) strength += 10;
-    
+
     // Character types
     if (/[A-Z]/.test(password)) strength += 20;
     if (/[a-z]/.test(password)) strength += 20;
     if (/[0-9]/.test(password)) strength += 20;
     if (/[^A-Za-z0-9]/.test(password)) strength += 10;
-    
+
     // Variety bonus
     const charTypes = [
       /[A-Z]/.test(password),
       /[a-z]/.test(password),
       /[0-9]/.test(password),
-      /[^A-Za-z0-9]/.test(password)
+      /[^A-Za-z0-9]/.test(password),
     ].filter(Boolean).length;
-    
+
     if (charTypes >= 3) strength += 10;
-    
+
     // Penalties
     if (/(.)\1{2,}/.test(password)) strength -= 10; // Repeated characters
-    if (formData.email && password.toLowerCase().includes(formData.email.split('@')[0].toLowerCase())) {
+    if (
+      formData.email &&
+      password
+        .toLowerCase()
+        .includes(formData.email.split("@")[0].toLowerCase())
+    ) {
       strength -= 10; // Contains part of email
     }
-    if (formData.firstName && password.toLowerCase().includes(formData.firstName.toLowerCase())) {
+    if (
+      formData.firstName &&
+      password.toLowerCase().includes(formData.firstName.toLowerCase())
+    ) {
       strength -= 10; // Contains first name
     }
-    if (formData.lastName && password.toLowerCase().includes(formData.lastName.toLowerCase())) {
+    if (
+      formData.lastName &&
+      password.toLowerCase().includes(formData.lastName.toLowerCase())
+    ) {
       strength -= 10; // Contains last name
     }
-    
+
     setPasswordStrength(Math.max(0, Math.min(strength, 100)));
   };
 
   const validateStep1 = () => {
     const newErrors = {};
     let isValid = true;
-    
-    ['firstName', 'lastName', 'email', 'phone'].forEach(field => {
+
+    ["firstName", "lastName", "email", "phone"].forEach((field) => {
       if (!validateField(field, formData[field])) {
         isValid = false;
-        newErrors[field] = errors[field] || '';
+        newErrors[field] = errors[field] || "";
       }
     });
-    
+
     return { isValid, errors: newErrors };
   };
 
   const validateStep2 = () => {
     const newErrors = {};
     let isValid = true;
-    
+
     // Validate password
-    if (!validateField('password', formData.password)) {
+    if (!validateField("password", formData.password)) {
       isValid = false;
-      newErrors.password = errors.password || '';
+      newErrors.password = errors.password || "";
     }
-    
+
     // Validate confirm password
     if (!validateConfirmPassword(formData.password, formData.confirmPassword)) {
       isValid = false;
-      newErrors.confirmPassword = errors.confirmPassword || '';
+      newErrors.confirmPassword = errors.confirmPassword || "";
     }
-    
+
     // Validate terms
     if (!formData.agreeToTerms) {
       isValid = false;
-      newErrors.agreeToTerms = 'يجب الموافقة على الشروط والأحكام';
+      newErrors.agreeToTerms = "يجب الموافقة على الشروط والأحكام";
     }
-    
+
     return { isValid, errors: newErrors };
   };
 
   const nextStep = () => {
     const validation = validateStep1();
-    
+
     if (!validation.isValid) {
       setErrors(validation.errors);
-      
+
       // Scroll to first error
       const firstErrorField = Object.keys(validation.errors)[0];
       setTimeout(() => {
         const element = document.getElementById(firstErrorField);
         if (element) {
-          element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          element.scrollIntoView({ behavior: "smooth", block: "center" });
           element.focus();
         }
       }, 100);
       return;
     }
-    
+
     // Clear previous errors
     setErrors({});
     setStep(2);
@@ -308,31 +350,31 @@ const Register = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     e.stopPropagation();
-    
+
     if (step === 1) {
       nextStep();
       return;
     }
-    
+
     // Validate step 2
     const validation = validateStep2();
     if (!validation.isValid) {
       setErrors(validation.errors);
-      
+
       // Scroll to first error
       const firstErrorField = Object.keys(validation.errors)[0];
       setTimeout(() => {
         const element = document.getElementById(firstErrorField);
         if (element) {
-          element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          element.scrollIntoView({ behavior: "smooth", block: "center" });
           element.focus();
         }
       }, 100);
       return;
     }
-    
+
     clearError();
-    
+
     try {
       // Prepare user data for registration
       const userData = {
@@ -342,49 +384,49 @@ const Register = () => {
         phone_number: formData.phone,
         password: formData.password,
         password_confirmation: formData.confirmPassword,
-        company: formData.company || '',
-        user_type: 'FAMILY_MEMBER',
+        company: formData.company || "",
+        user_type: "FAMILY_MEMBER",
         terms_accepted: formData.agreeToTerms,
-        receive_updates: formData.receiveUpdates
+        receive_updates: formData.receiveUpdates,
       };
-      
+
       // Call register function from Redux auth hook
       const result = await registerUser(userData);
-      
-      if (result.type === 'auth/register/fulfilled') {
+
+      if (result.type === "auth/register/fulfilled") {
         setVerificationSent(true);
-        
+
         // Don't redirect immediately - wait for email verification
         // Instead, show verification message
         setTimeout(() => {
-          navigate('/verify-email', { 
-            state: { 
+          navigate("/verify-email", {
+            state: {
               email: formData.email,
-              from: from 
-            } 
+              from: from,
+            },
           });
         }, 2000);
-      } else if (result.type === 'auth/register/rejected') {
-        setErrors({ general: result.payload || 'فشل التسجيل' });
+      } else if (result.type === "auth/register/rejected") {
+        setErrors({ general: result.payload || "فشل التسجيل" });
       }
     } catch (error) {
-      console.error('Registration error:', error);
-      setErrors({ 
-        general: error.message || 'حدث خطأ غير متوقع أثناء التسجيل' 
+      console.error("Registration error:", error);
+      setErrors({
+        general: error.message || "حدث خطأ غير متوقع أثناء التسجيل",
       });
     }
   };
 
   const getPasswordStrengthColor = () => {
-    if (passwordStrength < 40) return '#ef4444'; // red
-    if (passwordStrength < 70) return '#f59e0b'; // orange
-    return '#10b981'; // green
+    if (passwordStrength < 40) return "#ef4444"; // red
+    if (passwordStrength < 70) return "#f59e0b"; // orange
+    return "#10b981"; // green
   };
 
   const getPasswordStrengthText = () => {
-    if (passwordStrength < 40) return 'ضعيفة';
-    if (passwordStrength < 70) return 'متوسطة';
-    return 'قوية';
+    if (passwordStrength < 40) return "ضعيفة";
+    if (passwordStrength < 70) return "متوسطة";
+    return "قوية";
   };
 
   const isFieldValid = (field) => {
@@ -406,21 +448,24 @@ const Register = () => {
           <p className="success-message">
             مرحباً بك {formData.firstName}، تم إنشاء حسابك بنجاح.
             <br />
-            تم إرسال رابط التحقق إلى بريدك الإلكتروني: <strong>{formData.email}</strong>
+            تم إرسال رابط التحقق إلى بريدك الإلكتروني:{" "}
+            <strong>{formData.email}</strong>
             <br />
             <small className="verification-note">
               يرجى التحقق من بريدك الإلكتروني وتفعيل حسابك للمتابعة.
             </small>
           </p>
           <div className="verification-actions">
-            <button 
-              onClick={() => navigate('/login')}
+            <button
+              onClick={() => navigate("/login")}
               className="back-to-login-btn"
             >
               العودة إلى تسجيل الدخول
             </button>
-            <button 
-              onClick={() => navigate('/verify-email', { state: { email: formData.email } })}
+            <button
+              onClick={() =>
+                navigate("/verify-email", { state: { email: formData.email } })
+              }
               className="verify-now-btn"
             >
               التحقق الآن
@@ -442,17 +487,19 @@ const Register = () => {
         {/* Progress Bar */}
         <div className="progress-bar">
           <div className="progress-steps">
-            <div className={`step ${step >= 1 ? 'active' : ''} ${step > 1 ? 'completed' : ''}`}>
-              <div className="step-number">{step > 1 ? '✓' : '1'}</div>
+            <div
+              className={`step ${step >= 1 ? "active" : ""} ${step > 1 ? "completed" : ""}`}
+            >
+              <div className="step-number">{step > 1 ? "✓" : "1"}</div>
               <div className="step-label">المعلومات الشخصية</div>
             </div>
             <div className="step-line">
-              <div 
-                className="step-line-progress" 
-                style={{ width: step > 1 ? '100%' : '0%' }}
+              <div
+                className="step-line-progress"
+                style={{ width: step > 1 ? "100%" : "0%" }}
               />
             </div>
-            <div className={`step ${step >= 2 ? 'active' : ''}`}>
+            <div className={`step ${step >= 2 ? "active" : ""}`}>
               <div className="step-number">2</div>
               <div className="step-label">كلمة المرور</div>
             </div>
@@ -473,14 +520,21 @@ const Register = () => {
           </div>
         )}
 
-        <form 
-          onSubmit={step === 2 ? handleSubmit : (e) => { e.preventDefault(); nextStep(); }} 
+        <form
+          onSubmit={
+            step === 2
+              ? handleSubmit
+              : (e) => {
+                  e.preventDefault();
+                  nextStep();
+                }
+          }
           className="register-form"
           noValidate
         >
           {step === 1 && (
             <div className="form-step">
-              <div className="form-row">
+              {/* <div className="form-row">
                 <div className="form-group">
                   <label htmlFor="firstName">
                     <User size={18} />
@@ -492,18 +546,18 @@ const Register = () => {
                     name="firstName"
                     value={formData.firstName}
                     onChange={handleChange}
-                    onBlur={() => handleBlur('firstName')}
+                    onBlur={() => handleBlur("firstName")}
                     placeholder="محمد"
-                    className={`${isFieldInvalid('firstName') ? 'error' : ''} ${isFieldValid('firstName') ? 'success' : ''}`}
+                    className={`${isFieldInvalid("firstName") ? "error" : ""} ${isFieldValid("firstName") ? "success" : ""}`}
                     autoComplete="given-name"
                     required
                   />
-                  {isFieldValid('firstName') && (
+                  {isFieldValid("firstName") && (
                     <div className="field-success">
                       <CheckCircle size={14} />
                     </div>
                   )}
-                  {isFieldInvalid('firstName') && (
+                  {isFieldInvalid("firstName") && (
                     <span className="error-message">
                       <AlertCircle size={14} />
                       {errors.firstName}
@@ -522,24 +576,54 @@ const Register = () => {
                     name="lastName"
                     value={formData.lastName}
                     onChange={handleChange}
-                    onBlur={() => handleBlur('lastName')}
+                    onBlur={() => handleBlur("lastName")}
                     placeholder="أحمد"
-                    className={`${isFieldInvalid('lastName') ? 'error' : ''} ${isFieldValid('lastName') ? 'success' : ''}`}
+                    className={`${isFieldInvalid("lastName") ? "error" : ""} ${isFieldValid("lastName") ? "success" : ""}`}
                     autoComplete="family-name"
                     required
                   />
-                  {isFieldValid('lastName') && (
+                  {isFieldValid("lastName") && (
                     <div className="field-success">
                       <CheckCircle size={14} />
                     </div>
                   )}
-                  {isFieldInvalid('lastName') && (
+                  {isFieldInvalid("lastName") && (
                     <span className="error-message">
                       <AlertCircle size={14} />
                       {errors.lastName}
                     </span>
                   )}
                 </div>
+              </div> */}
+
+              <div className="form-group">
+                <label htmlFor="fullName">
+                  <User size={18} />
+                  <span>الاسم بالكامل *</span>
+                </label>
+                <input
+                  type="text"
+                  id="fullName"
+                  name="fullName"
+                  value={formData.fullName}
+                  onChange={handleChange}
+                  onBlur={() => handleBlur("fullName")}
+                  placeholder="محمد احمد المسعود"
+                  className={`${isFieldInvalid("fullName") ? "error" : ""} ${isFieldValid("email") ? "success" : ""}`}
+                  autoComplete="given-name"
+                  required
+                />
+                {isFieldValid("fullName") && (
+                  <div className="field-success">
+                    <CheckCircle size={14} />
+                  </div>
+                )}
+                {isFieldInvalid("fullName") && (
+                  <span className="error-message">
+                    <AlertCircle size={14} />
+                    {errors.email}
+                  </span>
+                )}
               </div>
 
               <div className="form-group">
@@ -553,19 +637,19 @@ const Register = () => {
                   name="email"
                   value={formData.email}
                   onChange={handleChange}
-                  onBlur={() => handleBlur('email')}
+                  onBlur={() => handleBlur("email")}
                   placeholder="example@domain.com"
-                  className={`${isFieldInvalid('email') ? 'error' : ''} ${isFieldValid('email') ? 'success' : ''}`}
+                  className={`${isFieldInvalid("email") ? "error" : ""} ${isFieldValid("email") ? "success" : ""}`}
                   dir="ltr"
                   autoComplete="email"
                   required
                 />
-                {isFieldValid('email') && (
+                {isFieldValid("email") && (
                   <div className="field-success">
                     <CheckCircle size={14} />
                   </div>
                 )}
-                {isFieldInvalid('email') && (
+                {isFieldInvalid("email") && (
                   <span className="error-message">
                     <AlertCircle size={14} />
                     {errors.email}
@@ -584,19 +668,19 @@ const Register = () => {
                   name="phone"
                   value={formData.phone}
                   onChange={handleChange}
-                  onBlur={() => handleBlur('phone')}
+                  onBlur={() => handleBlur("phone")}
                   placeholder="+966501234567"
-                  className={`${isFieldInvalid('phone') ? 'error' : ''} ${isFieldValid('phone') ? 'success' : ''}`}
+                  className={`${isFieldInvalid("phone") ? "error" : ""} ${isFieldValid("phone") ? "success" : ""}`}
                   dir="ltr"
                   autoComplete="tel"
                   required
                 />
-                {isFieldValid('phone') && (
+                {isFieldValid("phone") && (
                   <div className="field-success">
                     <CheckCircle size={14} />
                   </div>
                 )}
-                {isFieldInvalid('phone') && (
+                {isFieldInvalid("phone") && (
                   <span className="error-message">
                     <AlertCircle size={14} />
                     {errors.phone}
@@ -604,29 +688,13 @@ const Register = () => {
                 )}
               </div>
 
-              {/* <div className="form-group">
-                <label htmlFor="company">
-                  <Building size={18} />
-                  <span>الشركة (اختياري)</span>
-                </label>
-                <input
-                  type="text"
-                  id="company"
-                  name="company"
-                  value={formData.company}
-                  onChange={handleChange}
-                  placeholder="اسم الشركة"
-                  autoComplete="organization"
-                />
-              </div> */}
-
-              <button 
-                type="button" 
+              <button
+                type="button"
                 className="next-btn"
                 onClick={nextStep}
                 disabled={isLoading}
               >
-                {isLoading ? 'جاري التحقق...' : 'التالي'}
+                {isLoading ? "جاري التحقق..." : "التالي"}
                 <span className="arrow">←</span>
               </button>
             </div>
@@ -646,9 +714,9 @@ const Register = () => {
                     name="password"
                     value={formData.password}
                     onChange={handleChange}
-                    onBlur={() => handleBlur('password')}
+                    onBlur={() => handleBlur("password")}
                     placeholder="أدخل كلمة مرور قوية"
-                    className={`${isFieldInvalid('password') ? 'error' : ''} ${isFieldValid('password') ? 'success' : ''}`}
+                    className={`${isFieldInvalid("password") ? "error" : ""} ${isFieldValid("password") ? "success" : ""}`}
                     autoComplete="new-password"
                     required
                   />
@@ -657,30 +725,32 @@ const Register = () => {
                     className="password-toggle"
                     onClick={() => setShowPassword(!showPassword)}
                     tabIndex="-1"
-                    aria-label={showPassword ? 'إخفاء كلمة المرور' : 'إظهار كلمة المرور'}
+                    aria-label={
+                      showPassword ? "إخفاء كلمة المرور" : "إظهار كلمة المرور"
+                    }
                   >
                     {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                   </button>
                 </div>
-                
+
                 {/* Password Strength Indicator */}
                 {formData.password && (
                   <div className="password-strength">
                     <div className="strength-bar">
-                      <div 
+                      <div
                         className="strength-fill"
                         style={{
                           width: `${passwordStrength}%`,
-                          backgroundColor: getPasswordStrengthColor()
+                          backgroundColor: getPasswordStrengthColor(),
                         }}
                       ></div>
                     </div>
                     <div className="strength-info">
                       <span>قوة كلمة المرور: </span>
-                      <span 
-                        style={{ 
-                          color: getPasswordStrengthColor(), 
-                          fontWeight: 700 
+                      <span
+                        style={{
+                          color: getPasswordStrengthColor(),
+                          fontWeight: 700,
                         }}
                       >
                         {getPasswordStrengthText()}
@@ -691,19 +761,21 @@ const Register = () => {
                     </div>
                   </div>
                 )}
-                
-                {isFieldInvalid('password') && (
+
+                {isFieldInvalid("password") && (
                   <span className="error-message">
                     <AlertCircle size={14} />
                     {errors.password}
                   </span>
                 )}
-                
+
                 {/* Password Requirements */}
-                <div className="password-requirements">
+                {/* <div className="password-requirements">
                   <h4>متطلبات كلمة المرور:</h4>
                   <ul>
-                    <li className={formData.password.length >= 8 ? 'valid' : ''}>
+                    <li
+                      className={formData.password.length >= 8 ? "valid" : ""}
+                    >
                       {formData.password.length >= 8 ? (
                         <CheckCircle size={14} color="#10b981" />
                       ) : (
@@ -711,7 +783,9 @@ const Register = () => {
                       )}
                       <span>8 أحرف على الأقل</span>
                     </li>
-                    <li className={/[A-Z]/.test(formData.password) ? 'valid' : ''}>
+                    <li
+                      className={/[A-Z]/.test(formData.password) ? "valid" : ""}
+                    >
                       {/[A-Z]/.test(formData.password) ? (
                         <CheckCircle size={14} color="#10b981" />
                       ) : (
@@ -719,7 +793,9 @@ const Register = () => {
                       )}
                       <span>حرف كبير واحد على الأقل (A-Z)</span>
                     </li>
-                    <li className={/[a-z]/.test(formData.password) ? 'valid' : ''}>
+                    <li
+                      className={/[a-z]/.test(formData.password) ? "valid" : ""}
+                    >
                       {/[a-z]/.test(formData.password) ? (
                         <CheckCircle size={14} color="#10b981" />
                       ) : (
@@ -727,7 +803,9 @@ const Register = () => {
                       )}
                       <span>حرف صغير واحد على الأقل (a-z)</span>
                     </li>
-                    <li className={/[0-9]/.test(formData.password) ? 'valid' : ''}>
+                    <li
+                      className={/[0-9]/.test(formData.password) ? "valid" : ""}
+                    >
                       {/[0-9]/.test(formData.password) ? (
                         <CheckCircle size={14} color="#10b981" />
                       ) : (
@@ -735,7 +813,11 @@ const Register = () => {
                       )}
                       <span>رقم واحد على الأقل (0-9)</span>
                     </li>
-                    <li className={/[^A-Za-z0-9]/.test(formData.password) ? 'valid' : ''}>
+                    <li
+                      className={
+                        /[^A-Za-z0-9]/.test(formData.password) ? "valid" : ""
+                      }
+                    >
                       {/[^A-Za-z0-9]/.test(formData.password) ? (
                         <CheckCircle size={14} color="#10b981" />
                       ) : (
@@ -743,8 +825,12 @@ const Register = () => {
                       )}
                       <span>رمز خاص واحد على الأقل (@$!%*?&)</span>
                     </li>
-                    <li className={!formData.password.includes(' ') ? 'valid' : ''}>
-                      {!formData.password.includes(' ') ? (
+                    <li
+                      className={
+                        !formData.password.includes(" ") ? "valid" : ""
+                      }
+                    >
+                      {!formData.password.includes(" ") ? (
                         <CheckCircle size={14} color="#10b981" />
                       ) : (
                         <AlertCircle size={14} color="#ef4444" />
@@ -752,7 +838,7 @@ const Register = () => {
                       <span>بدون مسافات</span>
                     </li>
                   </ul>
-                </div>
+                </div> */}
               </div>
 
               <div className="form-group">
@@ -767,9 +853,9 @@ const Register = () => {
                     name="confirmPassword"
                     value={formData.confirmPassword}
                     onChange={handleChange}
-                    onBlur={() => handleBlur('confirmPassword')}
+                    onBlur={() => handleBlur("confirmPassword")}
                     placeholder="أعد إدخال كلمة المرور"
-                    className={`${isFieldInvalid('confirmPassword') ? 'error' : ''} ${isFieldValid('confirmPassword') ? 'success' : ''}`}
+                    className={`${isFieldInvalid("confirmPassword") ? "error" : ""} ${isFieldValid("confirmPassword") ? "success" : ""}`}
                     autoComplete="new-password"
                     required
                   />
@@ -778,12 +864,18 @@ const Register = () => {
                     className="password-toggle"
                     onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                     tabIndex="-1"
-                    aria-label={showConfirmPassword ? 'إخفاء التأكيد' : 'إظهار التأكيد'}
+                    aria-label={
+                      showConfirmPassword ? "إخفاء التأكيد" : "إظهار التأكيد"
+                    }
                   >
-                    {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                    {showConfirmPassword ? (
+                      <EyeOff size={20} />
+                    ) : (
+                      <Eye size={20} />
+                    )}
                   </button>
                 </div>
-                {isFieldInvalid('confirmPassword') && (
+                {isFieldInvalid("confirmPassword") && (
                   <span className="error-message">
                     <AlertCircle size={14} />
                     {errors.confirmPassword}
@@ -792,7 +884,9 @@ const Register = () => {
               </div>
 
               <div className="form-group checkbox-group">
-                <label className={`checkbox-label ${isFieldInvalid('agreeToTerms') ? 'error' : ''}`}>
+                <label
+                  className={`checkbox-label ${isFieldInvalid("agreeToTerms") ? "error" : ""}`}
+                >
                   <input
                     type="checkbox"
                     name="agreeToTerms"
@@ -800,10 +894,18 @@ const Register = () => {
                     onChange={handleChange}
                   />
                   <span>
-                    أوافق على <Link to="/terms" className="terms-link">الشروط والأحكام</Link> و <Link to="/privacy" className="terms-link">سياسة الخصوصية</Link> *
+                    أوافق على{" "}
+                    <Link to="/terms" className="terms-link">
+                      الشروط والأحكام
+                    </Link>{" "}
+                    و{" "}
+                    <Link to="/privacy" className="terms-link">
+                      سياسة الخصوصية
+                    </Link>{" "}
+                    *
                   </span>
                 </label>
-                {isFieldInvalid('agreeToTerms') && (
+                {isFieldInvalid("agreeToTerms") && (
                   <span className="error-message">
                     <AlertCircle size={14} />
                     {errors.agreeToTerms}
@@ -812,8 +914,8 @@ const Register = () => {
               </div>
 
               <div className="form-actions">
-                <button 
-                  type="button" 
+                <button
+                  type="button"
                   className="prev-btn"
                   onClick={prevStep}
                   disabled={isLoading}
@@ -821,8 +923,8 @@ const Register = () => {
                   <span className="arrow">→</span>
                   السابق
                 </button>
-                <button 
-                  type="submit" 
+                <button
+                  type="submit"
                   className="submit-btn"
                   disabled={isLoading}
                 >
@@ -832,7 +934,7 @@ const Register = () => {
                       جاري إنشاء الحساب...
                     </>
                   ) : (
-                    'إنشاء الحساب'
+                    "إنشاء الحساب"
                   )}
                 </button>
               </div>

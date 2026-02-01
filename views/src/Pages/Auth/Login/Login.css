@@ -1,6 +1,7 @@
 .auth-pages {
   width: 100vw;
   height: 100vh;
+  background-color: #fef2f2;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -20,7 +21,7 @@
 }
 
 .login-container::before {
-  content: '';
+  content: "";
   position: absolute;
   top: 0;
   right: 0;
@@ -49,7 +50,7 @@
 }
 
 .login-header::after {
-  content: '';
+  content: "";
   position: absolute;
   bottom: -15px;
   right: 50%;
@@ -127,9 +128,16 @@
 }
 
 @keyframes shake {
-  0%, 100% { transform: translateX(0); }
-  25% { transform: translateX(-5px); }
-  75% { transform: translateX(5px); }
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-5px);
+  }
+  75% {
+    transform: translateX(5px);
+  }
 }
 
 /* النموذج */
@@ -163,7 +171,7 @@
   border: 2px solid var(--gray-300);
   border-radius: var(--radius-lg);
   font-size: 15px;
-  font-family: 'Cairo', sans-serif;
+  font-family: "Cairo", sans-serif;
   transition: all var(--transition-normal);
   background: var(--white);
   color: var(--gray-900);
@@ -274,7 +282,7 @@
   font-weight: 700;
   cursor: pointer;
   transition: all var(--transition-normal);
-  font-family: 'Cairo', sans-serif;
+  font-family: "Cairo", sans-serif;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -304,7 +312,9 @@
 }
 
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /* رابط التسجيل */
@@ -366,7 +376,7 @@
 
 .social-divider::before,
 .social-divider::after {
-  content: '';
+  content: "";
   flex: 1;
   border-bottom: 1px solid var(--gray-300);
 }
@@ -405,14 +415,14 @@
 }
 
 .social-btn.google:hover {
-  border-color: #DB4437;
-  color: #DB4437;
+  border-color: #db4437;
+  color: #db4437;
   background: #fef2f2;
 }
 
 .social-btn.microsoft:hover {
-  border-color: #00A4EF;
-  color: #00A4EF;
+  border-color: #00a4ef;
+  color: #00a4ef;
   background: #f0f9ff;
 }
 
@@ -427,15 +437,15 @@
   body {
     padding: 15px;
   }
-  
+
   .login-container {
     padding: 30px 25px;
   }
-  
+
   .social-buttons {
     flex-direction: column;
   }
-  
+
   .login-logo {
     position: relative;
     top: 0;
@@ -450,11 +460,11 @@
     padding: 25px 20px;
     border-radius: var(--radius-xl);
   }
-  
+
   .login-header h2 {
     font-size: 24px;
   }
-  
+
   .form-options {
     flex-direction: column;
     align-items: flex-start;
@@ -476,9 +486,15 @@ button:focus-visible {
 
 /* تأثيرات إضافية */
 @keyframes pulse {
-  0% { box-shadow: 0 0 0 0 rgba(42, 110, 63, 0.4); }
-  70% { box-shadow: 0 0 0 10px rgba(42, 110, 63, 0); }
-  100% { box-shadow: 0 0 0 0 rgba(42, 110, 63, 0); }
+  0% {
+    box-shadow: 0 0 0 0 rgba(42, 110, 63, 0.4);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(42, 110, 63, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(42, 110, 63, 0);
+  }
 }
 
 .submit-btn:not(:disabled):hover {

@@ -1,6 +1,7 @@
 .auth-pages {
   width: 100vw;
   height: 100vh;
+  background-color: #fef2f2;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -21,7 +22,7 @@
 }
 
 .register-container::before {
-  content: '';
+  content: "";
   position: absolute;
   top: 0;
   right: 0;
@@ -50,7 +51,7 @@
 }
 
 .register-header::after {
-  content: '';
+  content: "";
   position: absolute;
   bottom: -15px;
   right: 50%;
@@ -77,13 +78,14 @@
 /* شريط التقدم */
 .progress-bar {
   margin-bottom: 30px;
-  padding: 20px;
+  padding: 10px 20px;
   background: var(--gray-50);
   border-radius: var(--radius-xl);
   border: 1px solid var(--gray-200);
 }
 
 .progress-steps {
+  height: 50px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -152,7 +154,7 @@
 }
 
 .step-line::after {
-  content: '';
+  content: "";
   position: absolute;
   top: 0;
   right: 0;
@@ -184,9 +186,16 @@
 }
 
 @keyframes shake {
-  0%, 100% { transform: translateX(0); }
-  25% { transform: translateX(-5px); }
-  75% { transform: translateX(5px); }
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-5px);
+  }
+  75% {
+    transform: translateX(5px);
+  }
 }
 
 /* النموذج */
@@ -211,13 +220,13 @@
 .form-group {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 5px;
 }
 
 .form-group label {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 6px;
   font-weight: 700;
   color: var(--gray-800);
   font-size: 14px;
@@ -232,7 +241,7 @@
   border: 2px solid var(--gray-300);
   border-radius: var(--radius-lg);
   font-size: 15px;
-  font-family: 'Cairo', sans-serif;
+  font-family: "Cairo", sans-serif;
   transition: all var(--transition-normal);
   background: var(--white);
   color: var(--gray-900);
@@ -403,7 +412,9 @@
 }
 
 /* أزرار التنقل */
-.next-btn, .prev-btn, .submit-btn {
+.next-btn,
+.prev-btn,
+.submit-btn {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -414,14 +425,14 @@
   font-weight: 700;
   cursor: pointer;
   transition: all var(--transition-normal);
-  font-family: 'Cairo', sans-serif;
+  font-family: "Cairo", sans-serif;
   border: none;
   margin-top: 10px;
 }
 
 .next-btn {
-  background: var(--primary-gradient);
-  color: var(--white);
+  background: #50c878;
+  color: #fff;
   width: 100%;
 }
 
@@ -443,8 +454,8 @@
 }
 
 .submit-btn {
-  background: var(--primary-gradient);
-  color: var(--white);
+  background: #50c878;
+  color: #fff;
   flex: 2;
 }
 
@@ -453,7 +464,8 @@
   box-shadow: 0 10px 20px rgba(42, 110, 63, 0.2);
 }
 
-.submit-btn:disabled, .next-btn:disabled {
+.submit-btn:disabled,
+.next-btn:disabled {
   opacity: 0.6;
   cursor: not-allowed;
   transform: none;
@@ -481,7 +493,9 @@
 }
 
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /* رابط تسجيل الدخول */
@@ -569,27 +583,28 @@
   body {
     padding: 15px;
   }
-  
+
   .register-container {
     padding: 30px 25px;
   }
-  
+
   .form-row {
     grid-template-columns: 1fr;
   }
-  
+
   .password-requirements ul {
     grid-template-columns: 1fr;
   }
-  
+
   .form-actions {
     flex-direction: column;
   }
-  
-  .prev-btn, .submit-btn {
+
+  .prev-btn,
+  .submit-btn {
     width: 100%;
   }
-  
+
   .register-logo {
     position: relative;
     top: 0;
@@ -604,15 +619,15 @@
     padding: 25px 20px;
     border-radius: var(--radius-xl);
   }
-  
+
   .register-header h2 {
     font-size: 24px;
   }
-  
+
   .progress-bar {
     padding: 15px;
   }
-  
+
   .step-label {
     font-size: 12px;
   }
@@ -632,9 +647,15 @@ button:focus-visible {
 
 /* تأثيرات إضافية */
 @keyframes pulse {
-  0% { box-shadow: 0 0 0 0 rgba(42, 110, 63, 0.4); }
-  70% { box-shadow: 0 0 0 10px rgba(42, 110, 63, 0); }
-  100% { box-shadow: 0 0 0 0 rgba(42, 110, 63, 0); }
+  0% {
+    box-shadow: 0 0 0 0 rgba(42, 110, 63, 0.4);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(42, 110, 63, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(42, 110, 63, 0);
+  }
 }
 
 .submit-btn:not(:disabled):hover {
