@@ -12,7 +12,7 @@ export const up = async (queryInterface) => {
       name_arabic VARCHAR(255) NOT NULL,
       name_english VARCHAR(255),
       description TEXT,
-      bank_account VACHAR(100),
+      bank_account VARCHAR(100),
       sort_order INT DEFAULT 0,
       is_active BOOLEAN DEFAULT TRUE,
       metadata JSON,
@@ -130,7 +130,8 @@ export const up = async (queryInterface) => {
       donation_id CHAR(36) NOT NULL,
       receipt_number VARCHAR(50) UNIQUE NOT NULL,
       receipt_date DATE NOT NULL,
-      issued_by CHAR(36),
+      -- issued_by CHAR(36),
+      issued_by BIGINT UNSIGNED NULL,
       issued_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       template_path VARCHAR(500),
       file_path VARCHAR(500),
@@ -146,13 +147,13 @@ export const up = async (queryInterface) => {
         REFERENCES donations(donation_id) 
         ON DELETE CASCADE 
         ON UPDATE CASCADE,
-      
+
       CONSTRAINT fk_receipt_issued_by 
         FOREIGN KEY (issued_by) 
         REFERENCES users(id) 
         ON DELETE SET NULL 
         ON UPDATE CASCADE,
-      
+
       INDEX idx_receipt_number (receipt_number),
       INDEX idx_donation_id (donation_id),
       INDEX idx_receipt_date (receipt_date),

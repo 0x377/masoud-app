@@ -7,12 +7,12 @@
   "scripts": {
     "dev": "nodemon server.js",
     "start": "node server.js",
-    "migrate:create": "node database/migration-runner.js create",
-    "migrate:up": "node database/migration-runner.js up",
-    "migrate:down": "node database/mmigration-runner.js down",
-    "migrate:seed": "node database/mmigration-runner.js seed",
-    "migrate:status": "node database/mmigration-runner.js status",
-    "migrate:reset": "node database/mmigration-runner.js reset"
+    "migrate:create": "node database/migration.js create",
+    "migrate:up": "node database/migration.js up",
+    "migrate:down": "node database/migration.js down",
+    "migrate:seed": "node database/migration.js seed",
+    "migrate:status": "node database/migration.js status",
+    "migrate:reset": "node database/migration.js reset"
   },
   "keywords": [],
   "author": "Ahmed Gamal",
