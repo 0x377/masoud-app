@@ -3,7 +3,7 @@ import bcrypt from "bcryptjs";
 import crypto from "crypto";
 import validator from "validator";
 import Person from "./Person.js";
-import db from "../config/database.js";
+import db from "../database/database.js";
 
 class User extends BaseModel {
   constructor() {

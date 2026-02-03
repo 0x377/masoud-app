@@ -1,12 +1,12 @@
-import db from '../config/database.js';
-import { v4 as uuidv4 } from 'uuid';
-import { format } from 'date-fns';
+import db from "../database/database.js";
+import { v4 as uuidv4 } from "uuid";
+import { format } from "date-fns";
 
 /**
  * Base model with common CRUD operations and utilities
  */
 class BaseModel {
-  constructor(tableName, primaryKey = 'id') {
+  constructor(tableName, primaryKey = "id") {
     this.tableName = tableName;
     this.primaryKey = primaryKey;
     this.db = db;
@@ -20,13 +20,13 @@ class BaseModel {
 
   // Format date for MySQL
   formatDate(date) {
-    return date ? format(date, 'yyyy-MM-dd HH:mm:ss') : null;
+    return date ? format(date, "yyyy-MM-dd HH:mm:ss") : null;
   }
 
   // Parse JSON fields
   parseJSON(value) {
     if (!value) return null;
-    if (typeof value === 'string') {
+    if (typeof value === "string") {
       try {
         return JSON.parse(value);
       } catch {
@@ -39,7 +39,7 @@ class BaseModel {
   // Stringify JSON fields
   stringifyJSON(value) {
     if (!value) return null;
-    if (typeof value === 'object') {
+    if (typeof value === "object") {
       return JSON.stringify(value);
     }
     return value;
@@ -47,7 +47,7 @@ class BaseModel {
 
   // Build WHERE clause
   buildWhereClause(filters, params = []) {
-    let whereClause = '';
+    let whereClause = "";
     const conditions = [];
 
     if (this.softDelete) {
@@ -58,23 +58,23 @@ class BaseModel {
       if (value === null || value === undefined) continue;
 
       if (Array.isArray(value)) {
-        conditions.push(`${key} IN (${value.map(() => '?').join(',')})`);
+        conditions.push(`${key} IN (${value.map(() => "?").join(",")})`);
         params.push(...value);
-      } else if (typeof value === 'object' && value.operator) {
+      } else if (typeof value === "object" && value.operator) {
         switch (value.operator) {
-          case 'LIKE':
+          case "LIKE":
             conditions.push(`${key} LIKE ?`);
             params.push(`%${value.value}%`);
             break;
-          case 'BETWEEN':
+          case "BETWEEN":
             conditions.push(`${key} BETWEEN ? AND ?`);
             params.push(value.value[0], value.value[1]);
             break;
-          case '>':
-          case '<':
-          case '>=':
-          case '<=':
-          case '!=':
+          case ">":
+          case "<":
+          case ">=":
+          case "<=":
+          case "!=":
             conditions.push(`${key} ${value.operator} ?`);
             params.push(value.value);
             break;
@@ -86,14 +86,14 @@ class BaseModel {
     }
 
     if (conditions.length > 0) {
-      whereClause = `WHERE ${conditions.join(' AND ')}`;
+      whereClause = `WHERE ${conditions.join(" AND ")}`;
     }
 
     return whereClause;
   }
 
   // Build ORDER BY clause
-  buildOrderClause(sortBy = 'created_at', sortOrder = 'DESC') {
+  buildOrderClause(sortBy = "created_at", sortOrder = "DESC") {
     return `ORDER BY ${sortBy} ${sortOrder}`;
   }
 
@@ -118,11 +118,11 @@ class BaseModel {
   async findById(id, options = {}) {
     const { includeDeleted = false } = options;
     let sql = `SELECT * FROM ${this.tableName} WHERE ${this.primaryKey} = ?`;
-    
+
     if (!includeDeleted && this.softDelete) {
-      sql += ' AND deleted_at IS NULL';
+      sql += " AND deleted_at IS NULL";
     }
-    
+
     const results = await this.executeQuery(sql, [id]);
     return results.length > 0 ? results[0] : null;
   }
@@ -132,19 +132,22 @@ class BaseModel {
     const {
       page = 1,
       limit = 20,
-      sortBy = 'created_at',
-      sortOrder = 'DESC',
-      includeDeleted = false
+      sortBy = "created_at",
+      sortOrder = "DESC",
+      includeDeleted = false,
     } = options;
 
     const params = [];
     let whereClause = this.buildWhereClause(filters, params);
-    
+
     if (!includeDeleted && this.softDelete) {
       if (whereClause) {
-        whereClause = whereClause.replace('WHERE', 'WHERE deleted_at IS NULL AND');
+        whereClause = whereClause.replace(
+          "WHERE",
+          "WHERE deleted_at IS NULL AND",
+        );
       } else {
-        whereClause = 'WHERE deleted_at IS NULL';
+        whereClause = "WHERE deleted_at IS NULL";
       }
     }
 
@@ -167,7 +170,7 @@ class BaseModel {
 
     const [data, countResult] = await Promise.all([
       this.executeQuery(dataSql, params),
-      this.executeQuery(countSql, params)
+      this.executeQuery(countSql, params),
     ]);
 
     const total = countResult[0]?.total || 0;
@@ -181,8 +184,8 @@ class BaseModel {
         limit: parseInt(limit),
         totalPages,
         hasNext: page < totalPages,
-        hasPrev: page > 1
-      }
+        hasPrev: page > 1,
+      },
     };
   }
 
@@ -190,23 +193,25 @@ class BaseModel {
   async create(data) {
     const id = data[this.primaryKey] || this.generateId();
     const now = new Date();
-    
+
     const record = {
       [this.primaryKey]: id,
       ...data,
       created_at: this.formatDate(data.created_at || now),
-      updated_at: this.formatDate(data.updated_at || now)
+      updated_at: this.formatDate(data.updated_at || now),
     };
 
     // Handle JSON fields
-    Object.keys(record).forEach(key => {
-      if (typeof record[key] === 'object' && record[key] !== null) {
+    Object.keys(record).forEach((key) => {
+      if (typeof record[key] === "object" && record[key] !== null) {
         record[key] = this.stringifyJSON(record[key]);
       }
     });
 
-    const columns = Object.keys(record).join(', ');
-    const placeholders = Object.keys(record).map(() => '?').join(', ');
+    const columns = Object.keys(record).join(", ");
+    const placeholders = Object.keys(record)
+      .map(() => "?")
+      .join(", ");
     const values = Object.values(record);
 
     const sql = `
@@ -228,27 +233,27 @@ class BaseModel {
     const now = new Date();
     const updateData = {
       ...data,
-      updated_at: this.formatDate(now)
+      updated_at: this.formatDate(now),
     };
 
     // Handle JSON fields
-    Object.keys(updateData).forEach(key => {
-      if (typeof updateData[key] === 'object' && updateData[key] !== null) {
+    Object.keys(updateData).forEach((key) => {
+      if (typeof updateData[key] === "object" && updateData[key] !== null) {
         updateData[key] = this.stringifyJSON(updateData[key]);
       }
     });
 
     const setClause = Object.keys(updateData)
-      .map(key => `${key} = ?`)
-      .join(', ');
-    
+      .map((key) => `${key} = ?`)
+      .join(", ");
+
     const values = [...Object.values(updateData), id];
 
     const sql = `
       UPDATE ${this.tableName}
       SET ${setClause}
       WHERE ${this.primaryKey} = ?
-      ${this.softDelete ? 'AND deleted_at IS NULL' : ''}
+      ${this.softDelete ? "AND deleted_at IS NULL" : ""}
     `;
 
     await this.executeQuery(sql, values);
@@ -258,7 +263,7 @@ class BaseModel {
   // Soft delete
   async softDeleteRecord(id) {
     if (!this.softDelete) {
-      throw new Error('Soft delete not enabled for this model');
+      throw new Error("Soft delete not enabled for this model");
     }
 
     const sql = `
@@ -282,7 +287,7 @@ class BaseModel {
   // Restore soft-deleted record
   async restore(id) {
     if (!this.softDelete) {
-      throw new Error('Soft delete not enabled for this model');
+      throw new Error("Soft delete not enabled for this model");
     }
 
     const sql = `
@@ -300,15 +305,15 @@ class BaseModel {
   async count(filters = {}) {
     const params = [];
     const whereClause = this.buildWhereClause(filters, params);
-    
+
     let sql = `SELECT COUNT(*) as count FROM ${this.tableName}`;
     if (whereClause) {
       sql += ` ${whereClause}`;
     }
     if (!whereClause && this.softDelete) {
-      sql += ' WHERE deleted_at IS NULL';
+      sql += " WHERE deleted_at IS NULL";
     } else if (whereClause && this.softDelete) {
-      sql = sql.replace('WHERE', 'WHERE deleted_at IS NULL AND');
+      sql = sql.replace("WHERE", "WHERE deleted_at IS NULL AND");
     }
 
     const results = await this.executeQuery(sql, params);

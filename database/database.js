@@ -1,24 +1,22 @@
 import mysql from "mysql2/promise";
-import dotenv from "dotenv";
-
-dotenv.config();
+import config from "../config/index.js";
 
 class Database {
   constructor() {
     this.pool = null;
     this.config = {
-      host: process.env.DB_HOST || "localhost",
-      port: process.env.DB_PORT || 3306,
-      user: process.env.DB_USER || "manage",
-      password: process.env.DB_PASSWORD || "Master@123",
-      database: process.env.DB_NAME || "masoud_db",
+      host: config.database.host,
+      port: config.database.port,
+      user: config.database.user,
+      password: config.database.password,
+      database: config.database.name,
       waitForConnections: true,
-      connectionLimit: process.env.DB_POOL_LIMIT || 10,
+      connectionLimit: config.database.connectionLimit,
       queueLimit: 0,
       enableKeepAlive: true,
       keepAliveInitialDelay: 0,
-      timezone: "UTC",
-      charset: "utf8mb4",
+      timezone: config.database.timezone,
+      charset: config.database.charset,
       dateStrings: true,
     };
   }

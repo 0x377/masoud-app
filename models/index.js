@@ -1,4 +1,4 @@
-import db from "../config/database.js";
+import db from "../database/database.js";
 
 // Import all models
 import Person from "./Person.js";

@@ -1,6 +1,6 @@
 import BaseModel from './BaseModel.js';
 import crypto from 'crypto';
-import db from '../config/database.js';
+import db from '../database/database.js';
 
 class PasswordResetToken extends BaseModel {
   constructor() {
@@ -12,7 +12,7 @@ class PasswordResetToken extends BaseModel {
   async createToken(email) {
     const token = crypto.randomBytes(32).toString('hex');
     const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
-    
+
     // Delete existing tokens for this email
     await this.deleteByEmail(email);
 
@@ -29,7 +29,7 @@ class PasswordResetToken extends BaseModel {
   // Verify token
   async verifyToken(email, token) {
     const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
-    
+
     const sql = `
       SELECT * FROM ${this.tableName}
       WHERE email = ?

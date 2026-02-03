@@ -1,6 +1,6 @@
 import BaseModel from './BaseModel.js';
 import crypto from 'crypto';
-import db from '../config/database.js';
+import db from '../database/database.js';
 
 class Session extends BaseModel {
   constructor() {

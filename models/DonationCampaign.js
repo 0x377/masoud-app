@@ -1,5 +1,4 @@
-// models/section1/DonationCampaign.js
-import BaseModel from '../core/BaseModel.js';
+import BaseModel from './BaseModel.js';
 
 class DonationCampaign extends BaseModel {
   constructor() {

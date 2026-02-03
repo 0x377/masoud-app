@@ -1,10 +1,9 @@
-import BaseModel from './BaseModel.js';
-import crypto from 'crypto';
-import db from '../config/database.js';
+import BaseModel from "./BaseModel.js";
+import db from "../database/database.js";
 
 class VerificationCode extends BaseModel {
   constructor() {
-    super('verification_codes', 'id');
+    super("verification_codes", "id");
     this.softDelete = false;
   }
 
@@ -14,7 +13,13 @@ class VerificationCode extends BaseModel {
   }
 
   // Create verification code
-  async createCode(userId, type, recipient, channel = 'sms', expiresInMinutes = 10) {
+  async createCode(
+    userId,
+    type,
+    recipient,
+    channel = "sms",
+    expiresInMinutes = 10,
+  ) {
     const code = this.generateCode();
     const expiresAt = new Date();
     expiresAt.setMinutes(expiresAt.getMinutes() + expiresInMinutes);
@@ -29,7 +34,7 @@ class VerificationCode extends BaseModel {
       attempts: 0,
       is_used: false,
       is_expired: false,
-      is_locked: false
+      is_locked: false,
     };
 
     // Invalidate previous codes of same type for this user
@@ -55,32 +60,36 @@ class VerificationCode extends BaseModel {
   // Verify code
   async verifyCode(userId, code, type) {
     const verification = await this.findValidCode(userId, code, type);
-    
+
     if (!verification) {
-      return { success: false, error: 'Invalid or expired code' };
+      return { success: false, error: "Invalid or expired code" };
     }
 
     // Check if code is locked
     if (verification.is_locked && verification.locked_until > new Date()) {
-      return { success: false, error: 'Code is temporarily locked' };
+      return { success: false, error: "Code is temporarily locked" };
     }
 
     // Check attempts
     if (verification.attempts >= 3) {
       await this.lockCode(verification.id);
-      return { success: false, error: 'Too many attempts, code locked' };
+      return { success: false, error: "Too many attempts, code locked" };
     }
 
     // Verify code
     if (verification.code !== code) {
       await this.recordAttempt(verification.id);
-      return { success: false, error: 'Invalid code', attempts: verification.attempts + 1 };
+      return {
+        success: false,
+        error: "Invalid code",
+        attempts: verification.attempts + 1,
+      };
     }
 
     // Check if expired
     if (new Date(verification.expires_at) < new Date()) {
       await this.expireCode(verification.id);
-      return { success: false, error: 'Code has expired' };
+      return { success: false, error: "Code has expired" };
     }
 
     // Mark as used
@@ -126,14 +135,14 @@ class VerificationCode extends BaseModel {
 
     await this.update(verificationId, {
       is_locked: true,
-      locked_until: this.formatDate(lockedUntil)
+      locked_until: this.formatDate(lockedUntil),
     });
   }
 
   // Expire code
   async expireCode(verificationId) {
     await this.update(verificationId, {
-      is_expired: true
+      is_expired: true,
     });
   }
 
@@ -144,7 +153,7 @@ class VerificationCode extends BaseModel {
       used_at: this.formatDate(new Date()),
       used_ip: ipAddress,
       used_device_id: deviceId,
-      verified_at: this.formatDate(new Date())
+      verified_at: this.formatDate(new Date()),
     });
   }
 
@@ -158,11 +167,11 @@ class VerificationCode extends BaseModel {
     const params = [userId];
 
     if (type) {
-      sql += ' AND type = ?';
+      sql += " AND type = ?";
       params.push(type);
     }
 
-    sql += ' ORDER BY created_at DESC LIMIT ?';
+    sql += " ORDER BY created_at DESC LIMIT ?";
     params.push(limit);
 
     return await db.query(sql, params);
@@ -198,10 +207,10 @@ class VerificationCode extends BaseModel {
   }
 
   // Resend code
-  async resendCode(userId, type, recipient, channel = 'sms') {
+  async resendCode(userId, type, recipient, channel = "sms") {
     // Check rate limiting (max 3 codes per hour)
     const hourAgo = new Date(Date.now() - 60 * 60 * 1000);
-    
+
     const sql = `
       SELECT COUNT(*) as count
       FROM ${this.tableName}
@@ -210,10 +219,16 @@ class VerificationCode extends BaseModel {
       AND created_at > ?
     `;
 
-    const results = await db.query(sql, [userId, type, this.formatDate(hourAgo)]);
-    
+    const results = await db.query(sql, [
+      userId,
+      type,
+      this.formatDate(hourAgo),
+    ]);
+
     if (results[0]?.count >= 3) {
-      throw new Error('Too many verification attempts. Please try again later.');
+      throw new Error(
+        "Too many verification attempts. Please try again later.",
+      );
     }
 
     // Create new code

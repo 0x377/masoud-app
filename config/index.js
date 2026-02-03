@@ -45,6 +45,7 @@ const config = {
     ssl: process.env.DB_SSL === 'true',
     charset: process.env.DB_CHARSET || 'utf8mb4',
     timezone: process.env.DB_TIMEZONE || '+00:00',
+    connectionLimit: process.env.DB_CONNECTION_LIMIT || 10,
   },
 
   // Redis

@@ -1,5 +1,5 @@
 import BaseModel from './BaseModel.js';
-import db from '../config/database.js';
+import db from '../database/database.js';
 
 class UserPermission extends BaseModel {
   constructor() {

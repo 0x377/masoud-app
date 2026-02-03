@@ -6,7 +6,7 @@ import cookieParser from "cookie-parser";
 import path from "path";
 
 import router from "./routes/index.route.js";
-import db from "./config/database.js";
+import db from "./database/database.js";
 // import BaseModel from "./models/core/BaseModel.js";
 
 dotenv.config();
