@@ -10,9 +10,9 @@ import Layout from "./Pages/Layout/Layout";
 
 // Sections
 import Donation from "./Pages/Sections/donation";
-import Board from "./Pages/Sections/board";
+import Board from "./Pages/Sections/board/board";
 import Waqf from "./Pages/Sections/waqf";
-import Archive from "./Pages/Sections/archive";
+import Archive from "./Pages/Sections/archive/archive";
 import Executive from "./Pages/Sections/executive";
 import Financial from "./Pages/Sections/financial";
 import Social from "./Pages/Sections/social";
@@ -33,7 +33,7 @@ export default function App() {
       <Route path="/reset-password/:token" element={<ResetPassword />} />
 
       <Route element={<Layout />}>
-        <Route path="/" element={<Donation />} />
+        <Route path="/" element={<Board />} />
         {action && (
           <>
             <Route path="/board" element={<Board />} />
@@ -51,9 +51,6 @@ export default function App() {
     </Routes>
   );
 }
-
-
-
 
 /*
 

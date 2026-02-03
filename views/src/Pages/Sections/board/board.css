@@ -1,0 +1,10 @@
+.p-board {
+  display: flex;
+  justify-content: space-evenly;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.p-board span {
+  margin-left: 0.75rem;
+}

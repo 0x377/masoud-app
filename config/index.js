@@ -193,8 +193,13 @@ const config = {
     defaultStatus: process.env.MEMBER_DEFAULT_STATUS || 'active',
   },
 
+  // email
+  email: {
+    apiKey: "",
+  },
+
   // Validate required environment variables
-  validate: function() {
+  validate: () => {
     const required = [
       'APP_KEY',
       'JWT_SECRET',
@@ -223,5 +228,4 @@ const config = {
 
 // Validate on load
 config.validate();
-
 export default config;

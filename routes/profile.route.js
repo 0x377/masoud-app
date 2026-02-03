@@ -6,7 +6,6 @@ import {
   verifyEmail,
   forgotPassword,
   resetPassword,
-  verifyToken,
 } from "../controllers/auth.controller.js";
 
 const router = express.Router();
@@ -17,6 +16,5 @@ router.post("/register", register);
 router.post("/verify-email", verifyEmail);
 router.post("/forgot-password", forgotPassword);
 router.post("/reset-password", resetPassword);
-router.get("/verify", verifyToken);
 
 export default router;

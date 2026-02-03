@@ -306,7 +306,7 @@ export const register = async (req, res) => {
       type: "EMAIL_VERIFICATION",
       recipient: email,
       channel: "email",
-      expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24 hours
+      expires_at: new Date(Date.now() + 2 * 60 * 1000), // 2 minites
     });
 
     // TODO: Send verification email with code

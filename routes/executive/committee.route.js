@@ -1,6 +1,6 @@
 import express from 'express';
 import ExecutiveCommittee from '../../models/executive/ExecutiveCommittee.js';
-import { authenticate, authorize } from '../../middleware/auth.js';
+import { authenticate, authorize } from '../../middlewares/auth.middleware.js';
 
 const router = express.Router();
 

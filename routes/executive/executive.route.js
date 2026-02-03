@@ -1,8 +1,8 @@
 import express from 'express';
 import ExecutiveController from '../../controllers/executive/ExecutiveController.js';
 import ExecutivePositionController from '../../controllers/executive/ExecutivePositionController.js';
-import { authenticate, authorize } from '../../middleware/auth.js';
-import { upload } from '../../middleware/upload.js';
+import { authenticate, authorize } from '../../middlewares/auth.middleware.js';
+import { upload } from '../../middlewares/upload.js';
 
 const router = express.Router();
 

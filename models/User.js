@@ -9,6 +9,7 @@ class User extends BaseModel {
   constructor() {
     super("users", "id");
     this.jsonFields = [
+      "user_type",
       "additional_roles",
       "permissions_override",
       "preferences",
@@ -169,13 +170,13 @@ class User extends BaseModel {
       const {
         includeDeleted = false,
         includePerson = false,
-        selectFields = ['*'],
-        orderBy = 'created_at',
-        orderDirection = 'DESC'
+        selectFields = ["*"],
+        orderBy = "created_at",
+        orderDirection = "DESC",
       } = options;
 
       // Build WHERE clause
-      let whereClause = 'WHERE 1=1';
+      let whereClause = "WHERE 1=1";
       const params = [];
 
       // Process WHERE conditions
@@ -187,16 +188,17 @@ class User extends BaseModel {
       });
 
       if (!includeDeleted) {
-        whereClause += ' AND u.deleted_at IS NULL';
+        whereClause += " AND u.deleted_at IS NULL";
       }
 
       // Build SELECT
-      let selectClause = 'SELECT u.*';
-      let fromClause = 'FROM users u';
-      
+      let selectClause = "SELECT u.*";
+      let fromClause = "FROM users u";
+
       if (includePerson) {
-        selectClause += ', p.*';
-        fromClause += ' LEFT JOIN persons p ON u.person_id = p.id AND p.deleted_at IS NULL';
+        selectClause += ", p.*";
+        fromClause +=
+          " LEFT JOIN persons p ON u.person_id = p.id AND p.deleted_at IS NULL";
       }
 
       // Build ORDER BY
@@ -211,17 +213,17 @@ class User extends BaseModel {
       `;
 
       const results = await db.query(sql, params);
-      
+
       if (results.length === 0) {
         return null;
       }
 
       // Process the result
       const user = results[0];
-      
+
       // Parse JSON fields
-      this.jsonFields.forEach(field => {
-        if (user[field] && typeof user[field] === 'string') {
+      this.jsonFields.forEach((field) => {
+        if (user[field] && typeof user[field] === "string") {
           try {
             user[field] = JSON.parse(user[field]);
           } catch {
@@ -232,7 +234,7 @@ class User extends BaseModel {
 
       return user;
     } catch (error) {
-      console.error('Error in User.findOne:', error);
+      console.error("Error in User.findOne:", error);
       throw error;
     }
   }
@@ -246,16 +248,16 @@ class User extends BaseModel {
   async authenticate(email, password) {
     try {
       const user = await this.findByEmail(email, { includeDeleted: false });
-      
+
       if (!user) {
-        return { success: false, error: 'User not found' };
+        return { success: false, error: "User not found" };
       }
 
       // Check password
       const isPasswordValid = await bcrypt.compare(password, user.password);
-      
+
       if (!isPasswordValid) {
-        return { success: false, error: 'Invalid password' };
+        return { success: false, error: "Invalid password" };
       }
 
       // Remove sensitive data
@@ -264,33 +266,16 @@ class User extends BaseModel {
       delete userData.mfa_secret;
       delete userData.mfa_backup_codes;
 
-      return { 
-        success: true, 
+      return {
+        success: true,
         user: userData,
-        requiresMFA: user.mfa_enabled || false
+        requiresMFA: user.mfa_enabled || false,
       };
     } catch (error) {
-      console.error('Authentication error:', error);
-      return { success: false, error: 'Authentication failed' };
+      console.error("Authentication error:", error);
+      return { success: false, error: "Authentication failed" };
     }
   }
-
-  // Find by email
-  // async findByEmail(email, includeDeleted = false) {
-  //   const sql = `
-  //     SELECT u.*, p.* 
-  //     FROM users u
-  //     LEFT JOIN persons p ON u.person_id = p.id AND p.deleted_at IS NULL
-  //     WHERE u.email = ? 
-  //     ${!includeDeleted ? "AND u.deleted_at IS NULL" : ""}
-  //   `;
-
-  //   const results = await db.query(sql, [email]);
-  //   if (results.length === 0) return null;
-
-  //   const record = results[0];
-  //   return this.parseJSONFields(record, this.jsonFields);
-  // }
 
   // Find by phone
   async findByPhone(phone, includeDeleted = false) {
@@ -325,66 +310,6 @@ class User extends BaseModel {
     const record = results[0];
     return this.parseJSONFields(record, this.jsonFields);
   }
-
-  // Authenticate user
-  // async authenticate(identifier, password, ipAddress = null) {
-  //   // Try to find user by email or phone
-  //   let user =
-  //     (await this.findByEmail(identifier)) ||
-  //     (await this.findByPhone(identifier));
-
-  //   if (!user) {
-  //     throw new Error("Invalid credentials");
-  //   }
-
-  //   // Check account status
-  //   if (user.status !== "ACTIVE") {
-  //     throw new Error(
-  //       `Account is ${user.status.toLowerCase().replace("_", " ")}`,
-  //     );
-  //   }
-
-  //   // Check if account is locked
-  //   if (user.locked_until && new Date(user.locked_until) > new Date()) {
-  //     throw new Error("Account is temporarily locked. Please try again later.");
-  //   }
-
-  //   // Verify password
-  //   const isPasswordValid = await this.verifyPassword(password, user.password);
-
-  //   if (!isPasswordValid) {
-  //     // Record failed attempt
-  //     await this.recordFailedLogin(user.id);
-
-  //     const failedAttempts = (user.failed_login_attempts || 0) + 1;
-  //     const remainingAttempts = 5 - failedAttempts;
-
-  //     if (remainingAttempts > 0) {
-  //       throw new Error(
-  //         `Invalid password. ${remainingAttempts} attempts remaining.`,
-  //       );
-  //     } else {
-  //       throw new Error(
-  //         "Account locked due to multiple failed attempts. Please contact support.",
-  //       );
-  //     }
-  //   }
-
-  //   // Reset failed attempts on successful login
-  //   await this.resetFailedAttempts(user.id);
-
-  //   // Update last login
-  //   await this.updateLoginInfo(user.id, ipAddress);
-
-  //   // Sanitize user object
-  //   const sanitizedUser = this.sanitize(user);
-
-  //   return {
-  //     user: sanitizedUser,
-  //     requiresMFA: user.mfa_enabled,
-  //     mfaSecret: user.mfa_enabled ? user.mfa_secret : null,
-  //   };
-  // }
 
   // Record failed login attempt
   async recordFailedLogin(userId) {
@@ -855,452 +780,3 @@ class User extends BaseModel {
 }
 
 export default User;
-
-// import BaseModel from './BaseModel.js';
-// import bcrypt from 'bcryptjs';
-// import crypto from 'crypto';
-// import validator from 'validator';
-
-// class User extends BaseModel {
-//   constructor() {
-//     super('users', 'id');
-//   }
-
-//   // Validate user data
-//   validate(data, isUpdate = false) {
-//     const errors = [];
-
-//     // Required fields for new users
-//     if (!isUpdate) {
-//       if (!data.email) {
-//         errors.push('Email is required');
-//       }
-//       if (!data.password) {
-//         errors.push('Password is required');
-//       }
-//     }
-
-//     // Email validation
-//     if (data.email && !validator.isEmail(data.email)) {
-//       errors.push('Invalid email format');
-//     }
-
-//     // Phone validation
-//     if (data.phone_number && !/^(009665|9665|\+9665|05|5)([0-9]{8})$/.test(data.phone_number)) {
-//       errors.push('Invalid Saudi phone number format');
-//     }
-
-//     // Password strength
-//     if (data.password && !this.isStrongPassword(data.password)) {
-//       errors.push('Password must be at least 8 characters with uppercase, lowercase, number, and special character');
-//     }
-
-//     // User type validation
-//     const validUserTypes = [
-//       'FAMILY_MEMBER',
-//       'BOARD_MEMBER',
-//       'EXECUTIVE',
-//       'FINANCE_MANAGER',
-//       'SOCIAL_COMMITTEE',
-//       'CULTURAL_COMMITTEE',
-//       'RECONCILIATION_COMMITTEE',
-//       'SPORTS_COMMITTEE',
-//       'MEDIA_CENTER',
-//       'SUPER_ADMIN'
-//     ];
-
-//     if (data.user_type && !validUserTypes.includes(data.user_type)) {
-//       errors.push('Invalid user type');
-//     }
-
-//     return errors;
-//   }
-
-//   // Check password strength
-//   isStrongPassword(password) {
-//     const minLength = 8;
-//     const hasUpperCase = /[A-Z]/.test(password);
-//     const hasLowerCase = /[a-z]/.test(password);
-//     const hasNumbers = /\d/.test(password);
-//     const hasSpecialChar = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password);
-
-//     return password.length >= minLength &&
-//            hasUpperCase &&
-//            hasLowerCase &&
-//            hasNumbers &&
-//            hasSpecialChar;
-//   }
-
-//   // Hash password
-//   async hashPassword(password) {
-//     const saltRounds = 12;
-//     return await bcrypt.hash(password, saltRounds);
-//   }
-
-//   // Verify password
-//   async verifyPassword(plainPassword, hashedPassword) {
-//     return await bcrypt.compare(plainPassword, hashedPassword);
-//   }
-
-//   // Generate MFA secret
-//   generateMFASecret() {
-//     return crypto.randomBytes(20).toString('base64');
-//   }
-
-//   // Generate backup codes
-//   generateBackupCodes(count = 10) {
-//     const codes = [];
-//     for (let i = 0; i < count; i++) {
-//       codes.push(crypto.randomBytes(4).toString('hex').toUpperCase());
-//     }
-//     return codes;
-//   }
-
-//   // Find by email
-//   async findByEmail(email) {
-//     const sql = `
-//       SELECT * FROM users
-//       WHERE email = ?
-//       AND deleted_at IS NULL
-//     `;
-
-//     const results = await this.executeQuery(sql, [email]);
-//     return results.length > 0 ? results[0] : null;
-//   }
-
-//   // Find by phone
-//   async findByPhone(phone) {
-//     const sql = `
-//       SELECT * FROM users
-//       WHERE phone_number = ?
-//       AND deleted_at IS NULL
-//     `;
-
-//     const results = await this.executeQuery(sql, [phone]);
-//     return results.length > 0 ? results[0] : null;
-//   }
-
-//   // Create user with password hashing
-//   async createWithPassword(data) {
-//     const errors = this.validate(data, false);
-//     if (errors.length > 0) {
-//       throw new Error(`Validation failed: ${errors.join(', ')}`);
-//     }
-
-//     // Check for duplicate email
-//     const existingEmail = await this.findByEmail(data.email);
-//     if (existingEmail) {
-//       throw new Error('User with this email already exists');
-//     }
-
-//     // Check for duplicate phone
-//     if (data.phone_number) {
-//       const existingPhone = await this.findByPhone(data.phone_number);
-//       if (existingPhone) {
-//         throw new Error('User with this phone number already exists');
-//       }
-//     }
-
-//     // Hash password
-//     const hashedPassword = await this.hashPassword(data.password);
-
-//     const userData = {
-//       ...data,
-//       password: hashedPassword,
-//       password_changed_at: this.formatDate(new Date())
-//     };
-
-//     return await this.create(userData);
-//   }
-
-//   // Update user with validation
-//   async updateWithValidation(id, data) {
-//     const errors = this.validate(data, true);
-//     if (errors.length > 0) {
-//       throw new Error(`Validation failed: ${errors.join(', ')}`);
-//     }
-
-//     // Check for duplicate email (excluding current user)
-//     if (data.email) {
-//       const existingEmail = await this.findByEmail(data.email);
-//       if (existingEmail && existingEmail.id !== id) {
-//         throw new Error('Another user with this email already exists');
-//       }
-//     }
-
-//     // Check for duplicate phone (excluding current user)
-//     if (data.phone_number) {
-//       const existingPhone = await this.findByPhone(data.phone_number);
-//       if (existingPhone && existingPhone.id !== id) {
-//         throw new Error('Another user with this phone number already exists');
-//       }
-//     }
-
-//     // Handle password change
-//     if (data.password) {
-//       data.password = await this.hashPassword(data.password);
-//       data.password_changed_at = this.formatDate(new Date());
-//     }
-
-//     return await this.update(id, data);
-//   }
-
-//   async create(data = {}) {
-//     const sql = `
-//       INSERT INTO users(email, password) VALUES (?, ?);
-//     `;
-
-//     const results = await this.executeQuery(sql, [data.email, data.password]);
-//     return results.length > 0 ? results[0] : null;
-//   }
-
-//   // Authenticate user
-//   async authenticate(email, password) {
-//     const user = await this.findByEmail(email);
-//     if (!user) {
-//       return { success: false, error: 'User not found' };
-//     }
-
-//     // Check if account is active
-//     if (user.status !== 'ACTIVE') {
-//       return {
-//         success: false,
-//         error: `Account is ${user.status.toLowerCase().replace('_', ' ')}`
-//       };
-//     }
-
-//     // Check if account is locked
-//     if (user.locked_until && new Date(user.locked_until) > new Date()) {
-//       return {
-//         success: false,
-//         error: 'Account is temporarily locked'
-//       };
-//     }
-
-//     // Verify password
-//     const passwordValid = await this.verifyPassword(password, user.password);
-//     if (!passwordValid) {
-//       // Record failed attempt
-//       await this.recordFailedLogin(user.id);
-//       return { success: false, error: 'Invalid password' };
-//     }
-
-//     // Reset failed attempts on successful login
-//     await this.resetFailedAttempts(user.id);
-
-//     // Update last login
-//     await this.updateLastLogin(user.id);
-
-//     return {
-//       success: true,
-//       user: this.sanitizeUser(user),
-//       requiresMFA: user.mfa_enabled
-//     };
-//   }
-
-//   // Record failed login attempt
-//   async recordFailedLogin(userId) {
-//     const user = await this.findById(userId);
-//     if (!user) return;
-
-//     const failedAttempts = (user.failed_login_attempts || 0) + 1;
-//     let lockedUntil = null;
-
-//     // Lock account after 5 failed attempts for 15 minutes
-//     if (failedAttempts >= 5) {
-//       const lockTime = new Date();
-//       lockTime.setMinutes(lockTime.getMinutes() + 15);
-//       lockedUntil = this.formatDate(lockTime);
-//     }
-
-//     await this.update(userId, {
-//       failed_login_attempts: failedAttempts,
-//       locked_until: lockedUntil
-//     });
-//   }
-
-//   // Reset failed login attempts
-//   async resetFailedAttempts(userId) {
-//     await this.update(userId, {
-//       failed_login_attempts: 0,
-//       locked_until: null
-//     });
-//   }
-
-//   // Update last login
-//   async updateLastLogin(userId, ipAddress = null) {
-//     const updateData = {
-//       last_login_at: this.formatDate(new Date()),
-//       last_activity_at: this.formatDate(new Date()),
-//       login_count: await this.incrementLoginCount(userId)
-//     };
-
-//     if (ipAddress) {
-//       updateData.last_login_ip = ipAddress;
-//     }
-
-//     await this.update(userId, updateData);
-//   }
-
-//   // Increment login count
-//   async incrementLoginCount(userId) {
-//     const user = await this.findById(userId);
-//     return (user.login_count || 0) + 1;
-//   }
-
-//   // Enable MFA
-//   async enableMFA(userId) {
-//     const mfaSecret = this.generateMFASecret();
-//     const backupCodes = this.generateBackupCodes();
-
-//     await this.update(userId, {
-//       mfa_enabled: true,
-//       mfa_secret: mfaSecret,
-//       mfa_backup_codes: this.stringifyJSON(backupCodes),
-//       mfa_enabled_at: this.formatDate(new Date())
-//     });
-
-//     return { mfaSecret, backupCodes };
-//   }
-
-//   // Disable MFA
-//   async disableMFA(userId) {
-//     await this.update(userId, {
-//       mfa_enabled: false,
-//       mfa_secret: null,
-//       mfa_backup_codes: null,
-//       mfa_enabled_at: null
-//     });
-//   }
-
-//   // Verify MFA code
-//   verifyMFACode(userSecret, code) {
-//     // Implementation would use TOTP library like 'otplib'
-//     // For now, return a placeholder
-//     return true;
-//   }
-
-//   // Sanitize user object (remove sensitive data)
-//   sanitizeUser(user) {
-//     const sanitized = { ...user };
-//     delete sanitized.password;
-//     delete sanitized.mfa_secret;
-//     delete sanitized.mfa_backup_codes;
-//     delete sanitized.last_login_ip;
-//     return sanitized;
-//   }
-
-//   // Get user permissions
-//   async getPermissions(userId) {
-//     const user = await this.findById(userId);
-//     if (!user) {
-//       throw new Error('User not found');
-//     }
-
-//     // This would integrate with the AccessControlMatrix model
-//     // For now, return basic permissions based on user_type
-//     const permissions = {
-//       canViewDonations: ['FAMILY_MEMBER', 'BOARD_MEMBER', 'EXECUTIVE', 'FINANCE_MANAGER', 'SUPER_ADMIN'].includes(user.user_type),
-//       canManageDonations: ['EXECUTIVE', 'FINANCE_MANAGER', 'SUPER_ADMIN'].includes(user.user_type),
-//       canViewArchive: ['FAMILY_MEMBER', 'BOARD_MEMBER', 'EXECUTIVE', 'SUPER_ADMIN'].includes(user.user_type),
-//       canManageArchive: ['EXECUTIVE', 'SUPER_ADMIN'].includes(user.user_type),
-//       canManageUsers: ['SUPER_ADMIN'].includes(user.user_type),
-//       user_type: user.user_type
-//     };
-
-//     return permissions;
-//   }
-
-//   // Get user statistics
-//   async getUserStatistics(userId) {
-//     const sql = `
-//       SELECT
-//         login_count,
-//         total_donations,
-//         donation_count,
-//         last_donation_at,
-//         last_login_at,
-//         last_activity_at,
-//         failed_login_attempts,
-//         DATE(created_at) as join_date,
-//         DATEDIFF(NOW(), created_at) as days_since_join
-//       FROM users
-//       WHERE id = ?
-//       AND deleted_at IS NULL
-//     `;
-
-//     const results = await this.executeQuery(sql, [userId]);
-//     return results[0] || {};
-//   }
-
-//   // Change password
-//   async changePassword(userId, currentPassword, newPassword) {
-//     const user = await this.findById(userId);
-//     if (!user) {
-//       throw new Error('User not found');
-//     }
-
-//     // Verify current password
-//     const valid = await this.verifyPassword(currentPassword, user.password);
-//     if (!valid) {
-//       throw new Error('Current password is incorrect');
-//     }
-
-//     // Validate new password
-//     if (!this.isStrongPassword(newPassword)) {
-//       throw new Error('New password does not meet security requirements');
-//     }
-
-//     // Update password
-//     const hashedPassword = await this.hashPassword(newPassword);
-
-//     await this.update(userId, {
-//       password: hashedPassword,
-//       password_changed_at: this.formatDate(new Date())
-//     });
-
-//     return true;
-//   }
-
-//   // Search users
-//   async searchUsers(query, options = {}) {
-//     const { page = 1, limit = 20, user_type = null } = options;
-
-//     let sql = `
-//       SELECT
-//         u.id,
-//         u.email,
-//         u.phone_number,
-//         u.user_type,
-//         u.status,
-//         u.created_at,
-//         p.full_name_arabic,
-//         p.full_name_english
-//       FROM users u
-//       LEFT JOIN persons p ON u.person_id = p.person_id AND p.deleted_at IS NULL
-//       WHERE u.deleted_at IS NULL
-//       AND (
-//         u.email LIKE ?
-//         OR u.phone_number LIKE ?
-//         OR p.full_name_arabic LIKE ?
-//         OR p.full_name_english LIKE ?
-//       )
-//     `;
-
-//     const params = [
-//       `%${query}%`, `%${query}%`, `%${query}%`, `%${query}%`
-//     ];
-
-//     if (user_type) {
-//       sql += ' AND u.user_type = ?';
-//       params.push(user_type);
-//     }
-
-//     sql += ' ORDER BY u.created_at DESC LIMIT ? OFFSET ?';
-//     params.push(limit, (page - 1) * limit);
-
-//     return await this.executeQuery(sql, params);
-//   }
-// }
-
-// export default User;

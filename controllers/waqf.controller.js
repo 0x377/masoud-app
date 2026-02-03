@@ -49,6 +49,42 @@ class WaqfController {
     }
   }
 
+  // Create a new waqf
+  async updateWaqf(req, res) {
+    try {
+      const { 
+        name_arabic, 
+        description, 
+        waqf_type, 
+        establishment_date, 
+        founder_id,
+        current_value 
+      } = req.body;
+      
+      const userId = req.user.id;
+
+      const waqf = await this.waqfModel.updateWaqf({
+        name_arabic,
+        description,
+        waqf_type,
+        establishment_date,
+        founder_id,
+        current_value
+      }, userId);
+
+      res.status(201).json({
+        success: true,
+        data: waqf,
+        message: 'Waqf created successfully'
+      });
+    } catch (error) {
+      res.status(400).json({
+        success: false,
+        error: error.message
+      });
+    }
+  }
+
   // Get waqf details
   async getWaqf(req, res) {
     try {

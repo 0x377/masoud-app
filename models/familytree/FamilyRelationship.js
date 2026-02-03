@@ -1,5 +1,4 @@
-import BaseModel from "./BaseModel.js";
-import db from "../config/database.js";
+import BaseModel from "../BaseModel.js";
 
 class FamilyRelationship extends BaseModel {
   constructor() {

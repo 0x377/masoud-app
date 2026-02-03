@@ -3,7 +3,7 @@ import axios from 'axios';
 import { toast } from 'react-toastify';
 
 // API Configuration
-const API_BASE_URL = 'http://127.0.0.1:8000/api';
+const API_BASE_URL = 'http://127.0.0.1:4000/api';
 
 // Configure axios instance
 export const authApi = axios.create({
@@ -68,14 +68,14 @@ export const login = createAsyncThunk(
   'auth/login',
   async ({ email, password, rememberMe }, { rejectWithValue }) => {
     try {
-      const response = await authApi.post('/v1/auth/login', {
+      const response = await authApi.post('/auth/login', {
         email,
         password,
         rememberMe
       });
 
       const { user, accessToken, refreshToken } = response.data;
-      
+
       // Store tokens
       localStorage.setItem('accessToken', accessToken);
       localStorage.setItem('refreshToken', refreshToken);
@@ -145,7 +145,7 @@ export const verifyToken = createAsyncThunk(
   'auth/verifyToken',
   async (_, { rejectWithValue }) => {
     try {
-      await authApi.get('/auth/verify');
+      await authApi.get('/auth/verify-token');
       return true;
     } catch (error) {
       return rejectWithValue('انتهت صلاحية الجلسة');

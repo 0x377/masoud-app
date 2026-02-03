@@ -1,7 +1,7 @@
 import express from 'express';
 import ReconciliationCaseController from '../../controllers/reconciliation/ReconciliationCaseController.js';
 import CaseSessionController from '../../controllers/reconciliation/CaseSessionController.js';
-import { authenticate, authorize } from '../../middleware/auth.js';
+import { authenticate, authorize } from '../../middlewares/auth.middleware.js';
 
 const router = express.Router();
 

@@ -1,7 +1,7 @@
 import express from "express";
 import FamilyRelationshipController from "../../controllers/family/FamilyRelationshipController.js";
-import { authenticate, authorize } from "../../middleware/auth.middleware.js";
-import { checkRelationshipAccess } from "../../middleware/familyTree.middleware.js";
+import { authenticate, authorize } from "../../middlewares/auth.middleware.js";
+import { checkRelationshipAccess } from "../../middlewares/familyTree.middleware.js";
 
 const router = express.Router();
 

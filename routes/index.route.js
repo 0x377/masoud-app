@@ -1,19 +1,16 @@
 import express from "express";
-import familyTreeRoutes from "./family/familyTreeRoutes.js";
-import familyRelationshipRoutes from "./family/familyRelationshipRoutes.js";
-import familyTreeNodeRoutes from "./family/familyTreeNodeRoutes.js";
+import familyTreeRoutes from "./family/familyTree.route.js";
+import familyRelationshipRoutes from "./family/familyRelationship.route.js";
+import familyTreeNodeRoutes from "./family/familyTreeNode.route.js";
 import authRoutes from "./auth.route.js";
 import waqfRouter from "./waqf.route.js";
-import executiveRoutes from "./executive/executiveRoutes.js";
-import committeeRoutes from "./executive/committeeRoutes.js";
-import rcommitteeRoutes from "./reconciliation/committeeRoutes.js";
-import caseRoutes from "./reconciliation/caseRoutes.js";
-import reportRoutes from "./reconciliation/reportRoutes.js";
+import executiveRoutes from "./executive/executive.route.js";
+import committeeRoutes from "./executive/committee.route.js";
+import rcommitteeRoutes from "./reconciliation/committee.route.js";
+import caseRoutes from "./reconciliation/case.route.js";
+import reportRoutes from "./reconciliation/report.route.js";
 
 const router = express.Router();
-
-// API version prefix
-const API_PREFIX = "/api";
 
 // Family tree routes
 router.use("/family-trees", familyTreeRoutes);

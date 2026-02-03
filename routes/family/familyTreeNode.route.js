@@ -1,7 +1,7 @@
 import express from "express";
 import FamilyTreeNodeController from "../../controllers/family/FamilyTreeNodeController.js";
-import { authenticate } from "../../middleware/auth.middleware.js";
-import { checkNodeAccess } from "../../middleware/familyTree.middleware.js";
+import { authenticate } from "../../middlewares/auth.middleware.js";
+import { checkNodeAccess } from "../../middlewares/familyTree.middleware.js";
 
 const router = express.Router();
 
