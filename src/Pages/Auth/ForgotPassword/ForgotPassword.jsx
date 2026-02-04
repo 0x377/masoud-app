@@ -28,7 +28,7 @@ const ForgotPassword = () => {
     phone: '',
     countryCode: '+966'
   });
-  
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
@@ -392,7 +392,7 @@ const ForgotPassword = () => {
             <span>{error}</span>
           </div>
         )}
-        
+
         <div className="questions-container">
           {securityQuestions.map((q) => (
             <div key={q.id} className="question-item">

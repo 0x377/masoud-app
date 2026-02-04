@@ -1,38 +1,54 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { useLocation, useNavigate, Link } from 'react-router-dom';
-import { 
-  Mail, 
-  CheckCircle, 
-  AlertCircle, 
-  RefreshCw, 
-  Shield, 
+import React, { useState, useEffect, useRef, useCallback } from "react";
+import { useLocation, useNavigate, Link } from "react-router-dom";
+import {
+  Mail,
+  CheckCircle,
+  AlertCircle,
+  RefreshCw,
+  Shield,
   Clock,
   ArrowRight,
   Smartphone,
-  Key
-} from 'lucide-react';
-import { useAuth } from '../../../Hooks/useAuth';
-import './VerifyEmail.css';
+  Key,
+} from "lucide-react";
+import { useAuth } from "../../../Hooks/useAuth";
+import "./VerifyEmail.css";
 
 const VerifyEmail = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { verifyToken, resendVerification, isLoading, error: authError, clearError, user } = useAuth();
+  const {
+    verifyToken,
+    resendVerification,
+    isLoading,
+    error: authError,
+    clearError,
+    user,
+    verifyEmail,
+  } = useAuth();
 
-  const email = location.state?.email || user?.email || '';
-  const verificationMethod = location.state?.method || 'email'; // 'email' أو 'sms'
-  
-  const [verificationCode, setVerificationCode] = useState(['', '', '', '', '', '']);
+  const email = location.state?.email || user?.email || "";
+  const verificationMethod = location.state?.method || "email"; // 'email' أو 'sms'
+
+  const [verificationCode, setVerificationCode] = useState([
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+  ]);
   const [timer, setTimer] = useState(180); // 3 minutes
   const [codeSent, setCodeSent] = useState(false);
   const [verified, setVerified] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
   const [showResendOptions, setShowResendOptions] = useState(false);
-  const [alternativeMethod, setAlternativeMethod] = useState(verificationMethod);
+  const [alternativeMethod, setAlternativeMethod] =
+    useState(verificationMethod);
   const [remainingAttempts, setRemainingAttempts] = useState(5);
   const [locked, setLocked] = useState(false);
   const [lockTimer, setLockTimer] = useState(0);
-  
+
   const inputRefs = useRef([]);
   const formRef = useRef();
 
@@ -55,7 +71,7 @@ const VerifyEmail = () => {
   useEffect(() => {
     if (timer > 0 && !verified) {
       const interval = setInterval(() => {
-        setTimer(prev => prev - 1);
+        setTimer((prev) => prev - 1);
       }, 1000);
       return () => clearInterval(interval);
     }
@@ -65,7 +81,7 @@ const VerifyEmail = () => {
   useEffect(() => {
     if (lockTimer > 0 && locked) {
       const interval = setInterval(() => {
-        setLockTimer(prev => prev - 1);
+        setLockTimer((prev) => prev - 1);
       }, 1000);
       return () => clearInterval(interval);
     } else if (lockTimer <= 0 && locked) {
@@ -83,7 +99,7 @@ const VerifyEmail = () => {
 
   // Handle auto-verification when code is complete
   useEffect(() => {
-    const code = verificationCode.join('');
+    const code = verificationCode.join("");
     if (code.length === 6 && !verified && !locked) {
       const autoVerifyTimer = setTimeout(() => {
         handleVerify();
@@ -99,94 +115,100 @@ const VerifyEmail = () => {
     }
 
     setLoading(true);
-    setError('');
+    setError("");
     clearError();
 
     try {
       // In real app, call API to send verification code
       // const result = await resendVerification({ email, method });
-      
+
       // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+
       setCodeSent(true);
       setTimer(180); // Reset timer to 3 minutes
       setAlternativeMethod(method);
-      
     } catch (err) {
-      setError('فشل إرسال كود التحقق. حاول مرة أخرى.');
+      setError("فشل إرسال كود التحقق. حاول مرة أخرى.");
     } finally {
       setLoading(false);
     }
   };
 
   const handleResendCode = async () => {
-    if (timer > 30) { // Prevent resend if more than 30 seconds remaining
+    if (timer > 30) {
+      // Prevent resend if more than 30 seconds remaining
       setError(`يمكنك إعادة الإرسال خلال ${formatTime(timer - 30)}`);
       return;
     }
-    
+
     await handleSendCode(alternativeMethod);
   };
 
-  const handleCodeChange = useCallback((index, value) => {
-    if (locked) {
-      setError(`الحساب مؤقتاً. حاول مرة أخرى بعد ${formatTime(lockTimer)}`);
-      return;
-    }
-
-    // Allow only digits
-    if (value.length <= 1 && /^\d*$/.test(value)) {
-      const newCode = [...verificationCode];
-      newCode[index] = value;
-      setVerificationCode(newCode);
-      setError('');
-
-      // Auto-focus next input
-      if (value && index < 5) {
-        inputRefs.current[index + 1].current.focus();
+  const handleCodeChange = useCallback(
+    (index, value) => {
+      if (locked) {
+        setError(`الحساب مؤقتاً. حاول مرة أخرى بعد ${formatTime(lockTimer)}`);
+        return;
       }
-    }
-  }, [verificationCode, locked, lockTimer]);
 
-  const handleKeyDown = useCallback((index, e) => {
-    if (e.key === 'Backspace' && !verificationCode[index] && index > 0) {
-      // Move to previous input on backspace
-      inputRefs.current[index - 1].current.focus();
-    } else if (e.key === 'ArrowLeft' && index > 0) {
-      e.preventDefault();
-      inputRefs.current[index - 1].current.focus();
-    } else if (e.key === 'ArrowRight' && index < 5) {
-      e.preventDefault();
-      inputRefs.current[index + 1].current.focus();
-    } else if (e.key === 'Enter' && verificationCode.join('').length === 6) {
-      handleVerify();
-    }
-  }, [verificationCode]);
+      // Allow only digits
+      if (value.length <= 1 && /^\d*$/.test(value)) {
+        const newCode = [...verificationCode];
+        newCode[index] = value;
+        setVerificationCode(newCode);
+        setError("");
+
+        // Auto-focus next input
+        if (value && index < 5) {
+          inputRefs.current[index + 1].current.focus();
+        }
+      }
+    },
+    [verificationCode, locked, lockTimer],
+  );
+
+  const handleKeyDown = useCallback(
+    (index, e) => {
+      if (e.key === "Backspace" && !verificationCode[index] && index > 0) {
+        // Move to previous input on backspace
+        inputRefs.current[index - 1].current.focus();
+      } else if (e.key === "ArrowLeft" && index > 0) {
+        e.preventDefault();
+        inputRefs.current[index - 1].current.focus();
+      } else if (e.key === "ArrowRight" && index < 5) {
+        e.preventDefault();
+        inputRefs.current[index + 1].current.focus();
+      } else if (e.key === "Enter" && verificationCode.join("").length === 6) {
+        handleVerify();
+      }
+    },
+    [verificationCode],
+  );
 
   const handlePaste = useCallback((e) => {
     e.preventDefault();
-    const pastedData = e.clipboardData.getData('text').trim();
-    
+    const pastedData = e.clipboardData.getData("text").trim();
+
     // Check if pasted data is a 6-digit code
     if (/^\d{6}$/.test(pastedData)) {
-      const digits = pastedData.split('');
+      const digits = pastedData.split("");
       setVerificationCode(digits);
-      
+
       // Focus the last input
       setTimeout(() => {
         inputRefs.current[5].current.focus();
       }, 0);
     } else {
-      setError('الرجاء لصق رمز مكون من 6 أرقام فقط');
+      setError("الرجاء لصق رمز مكون من 6 أرقام فقط");
     }
   }, []);
 
   const handleVerify = async () => {
-    const code = verificationCode.join('');
-    
+    const code = verificationCode.join("");
+
     if (code.length !== 6) {
-      setError('الرجاء إدخال كود التحقق المكون من 6 أرقام');
+      setError("الرجاء إدخال كود التحقق المكون من 6 أرقام");
       return;
     }
 
@@ -196,53 +218,18 @@ const VerifyEmail = () => {
     }
 
     setLoading(true);
-    setError('');
+    setError("");
     clearError();
 
     try {
-      // In real app, call Redux action
-      // const result = await verifyToken({ token: code, email });
-      
-      // Simulate API call
-      await new Promise((resolve, reject) => {
-        setTimeout(() => {
-          // Mock verification logic
-          if (code === '123456') { // Test code
-            resolve({ success: true });
-          } else {
-            // Decrease remaining attempts
-            const newAttempts = remainingAttempts - 1;
-            setRemainingAttempts(newAttempts);
-            
-            if (newAttempts <= 0) {
-              setLocked(true);
-              setLockTimer(300); // 5 minutes lock
-              reject(new Error('تم تجاوز عدد المحاولات المسموح بها. الحساب مؤقتاً لمدة 5 دقائق.'));
-            } else {
-              reject(new Error(`كود التحقق غير صحيح. لديك ${newAttempts} محاولات متبقية.`));
-            }
-          }
-        }, 1500);
-      });
-
-      // Success
-      setVerified(true);
-      
-      // Store verification status
-      localStorage.setItem('email_verified', 'true');
-      localStorage.setItem('verified_email', email);
-      
-      // Auto-navigate after 3 seconds
-      const from = location.state?.from || '/dashboard';
-      setTimeout(() => {
-        navigate(from, { replace: true });
-      }, 3000);
-      
+      verifyEmail(verificationCode);
+      localStorage.setItem("email_verified", "true");
+      localStorage.setItem("verified_email", email);
     } catch (err) {
-      setError(err.message || 'حدث خطأ أثناء التحقق. حاول مرة أخرى.');
-      
+      setError(err.message || "حدث خطأ أثناء التحقق. حاول مرة أخرى.");
+
       // Clear code on error
-      setVerificationCode(['', '', '', '', '', '']);
+      setVerificationCode(["", "", "", "", "", ""]);
       inputRefs.current[0].current.focus();
     } finally {
       setLoading(false);
@@ -252,7 +239,7 @@ const VerifyEmail = () => {
   const formatTime = (seconds) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
-    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
   };
 
   const handleMethodChange = (method) => {
@@ -290,13 +277,13 @@ const VerifyEmail = () => {
               <span>تم تفعيل حسابك بالكامل</span>
             </div>
           </div>
-          
+
           <div className="redirect-info">
             <p>يتم توجيهك تلقائياً خلال 3 ثوان...</p>
             <div className="loading-bar">
-              <div 
+              <div
                 className="loading-progress"
-                style={{ animation: 'loading 3s linear forwards' }}
+                style={{ animation: "loading 3s linear forwards" }}
               ></div>
             </div>
           </div>
@@ -304,15 +291,15 @@ const VerifyEmail = () => {
           <div className="immediate-actions">
             <button
               className="btn-primary"
-              onClick={() => navigate('/dashboard')}
+              onClick={() => navigate("/dashboard")}
             >
               <ArrowRight size={18} />
               الانتقال للوحة التحكم الآن
             </button>
-            
+
             <button
               className="btn-secondary"
-              onClick={() => navigate('/profile')}
+              onClick={() => navigate("/profile")}
             >
               <Shield size={18} />
               إكمال الملف الشخصي
@@ -344,23 +331,26 @@ const VerifyEmail = () => {
             <AlertCircle size={18} />
             <div className="lock-info">
               <span className="lock-title">الحساب مؤقتاً</span>
-              <span className="lock-time">يمكنك المحاولة مرة أخرى خلال: {formatTime(lockTimer)}</span>
+              <span className="lock-time">
+                يمكنك المحاولة مرة أخرى خلال: {formatTime(lockTimer)}
+              </span>
             </div>
           </div>
         )}
 
         {!locked && (
           <>
-            <form ref={formRef} onSubmit={handleManualSubmit} className="verification-form" noValidate>
+            <form
+              ref={formRef}
+              onSubmit={handleManualSubmit}
+              className="verification-form"
+              noValidate
+            >
               <div className="code-input-container">
                 <label className="code-label">
                   أدخل الرمز المكون من 6 أرقام
                 </label>
-                <div 
-                  className="code-inputs" 
-                  onPaste={handlePaste}
-                  dir="ltr"
-                >
+                <div className="code-inputs" onPaste={handlePaste} dir="ltr">
                   {verificationCode.map((digit, index) => (
                     <input
                       key={index}
@@ -372,14 +362,14 @@ const VerifyEmail = () => {
                       value={digit}
                       onChange={(e) => handleCodeChange(index, e.target.value)}
                       onKeyDown={(e) => handleKeyDown(index, e)}
-                      className={`code-input ${digit ? 'filled' : ''}`}
+                      className={`code-input ${digit ? "filled" : ""}`}
                       disabled={isLoading || locked}
                       autoComplete="one-time-code"
                       aria-label={`رقم التحقق ${index + 1}`}
                     />
                   ))}
                 </div>
-                
+
                 {remainingAttempts < 5 && (
                   <div className="attempts-info">
                     <span className="attempts-text">
@@ -393,14 +383,16 @@ const VerifyEmail = () => {
                 <div className="timer">
                   <Clock size={16} color="#f59e0b" />
                   <span className="timer-label">ينتهي الكود خلال:</span>
-                  <span className={`timer-value ${timer < 60 ? 'warning' : ''}`}>
+                  <span
+                    className={`timer-value ${timer < 60 ? "warning" : ""}`}
+                  >
                     {formatTime(timer)}
                   </span>
                 </div>
-                
+
                 <button
                   type="button"
-                  className={`resend-btn ${timer > 30 || isLoading ? 'disabled' : ''}`}
+                  className={`resend-btn ${timer > 30 || isLoading ? "disabled" : ""}`}
                   onClick={handleResendCode}
                   disabled={timer > 30 || isLoading || locked}
                 >
@@ -417,7 +409,11 @@ const VerifyEmail = () => {
                 <button
                   type="submit"
                   className="verify-btn"
-                  disabled={isLoading || verificationCode.join('').length !== 6 || locked}
+                  disabled={
+                    isLoading ||
+                    verificationCode.join("").length !== 6 ||
+                    locked
+                  }
                 >
                   {isLoading ? (
                     <>
@@ -435,7 +431,6 @@ const VerifyEmail = () => {
             </form>
           </>
         )}
-
       </div>
     </div>
   );

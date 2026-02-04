@@ -11,7 +11,7 @@ import {
   register,
   logout,
   updateProfile,
-  changePassword,
+  verifyEmail,
   forgotPassword,
   resetPassword,
   clearError,
@@ -46,8 +46,8 @@ export const useAuth = () => {
     return dispatch(updateProfile(userData));
   };
 
-  const changeUserPassword = async (currentPassword, newPassword) => {
-    return dispatch(changePassword({ currentPassword, newPassword }));
+  const verifyUserEmail = async (code) => {
+    return dispatch(verifyEmail({ code }));
   };
 
   const sendForgotPassword = async (email) => {
@@ -105,7 +105,7 @@ export const useAuth = () => {
     register: registerUser,
     logout: logoutUser,
     updateProfile: updateUserProfile,
-    changePassword: changeUserPassword,
+    verifyEmail: verifyUserEmail,
     forgotPassword: sendForgotPassword,
     resetPassword: resetUserPassword,
     clearError: clearAuthError,
