@@ -8,6 +8,7 @@ import LoginHistory from "../models/LoginHistory.js";
 import SecurityLog from "../models/SecurityLog.js";
 import Session from "../models/Session.js";
 import config from "../config/index.js";
+import emailService from "../services/emailService.js";
 
 // Validation utilities
 export const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -98,10 +99,12 @@ export const login = async (req, res) => {
     return res.status(200).json({
       status: "success",
       message: "Login successful",
+      redirect: "/",
       data: {
         user: result.user,
         token: token,
         requiresMFA: result.requiresMFA,
+        isAuthencation: true,
       },
     });
   } catch (error) {
@@ -200,27 +203,18 @@ export const verify2FA = async (req, res) => {
 export const register = async (req, res) => {
   try {
     const {
-      full_name,
+      fullName,
       email,
       password,
-      confirmPassword,
       phone_number,
       national_id,
     } = req.body;
 
     // Check required fields
-    if (!full_name || !email || !password || !confirmPassword) {
+    if (!fullName || !email || !password) {
       return res.status(400).json({
         status: "error",
         message: "All fields are required",
-      });
-    }
-
-    // Check password match
-    if (password !== confirmPassword) {
-      return res.status(400).json({
-        status: "error",
-        message: "Passwords do not match",
       });
     }
 
@@ -264,8 +258,8 @@ export const register = async (req, res) => {
     // Create person record
     const person = await Person.create({
       national_id,
-      full_name_arabic: full_name,
-      full_name_english: full_name,
+      full_name_arabic: fullName,
+      full_name_english: fullName,
       email,
       phone_number,
       gender: "M", // Default, can be updated later
@@ -315,9 +309,12 @@ export const register = async (req, res) => {
     const userData = user.toJSON();
     delete userData.password;
 
+    emailService.sendVerificationCode(userData.email, verificationCode);
+
     return res.status(201).json({
       status: "success",
       message: "Registration successful. Please verify your email.",
+      redirect: "/verify-email",
       data: {
         user: userData,
         requiresVerification: true,
@@ -388,6 +385,7 @@ export const verifyEmail = async (req, res) => {
     return res.status(200).json({
       status: "success",
       message: "Email verified successfully",
+      redirect: "/login",
       data: {
         tokens: {
           accessToken,

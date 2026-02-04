@@ -197,6 +197,7 @@ const config = {
   // email
   email: {
     apiKey: "",
+    from: "gamaymaster2022@gmail.com",
   },
 
   // Validate required environment variables

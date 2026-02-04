@@ -1,30 +1,32 @@
-import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import axios from 'axios';
-import { toast } from 'react-toastify';
+import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
+import axios from "axios";
+import { toast } from "react-toastify";
+import { useNavigate } from "react-router-dom";
 
 // API Configuration
-const API_BASE_URL = 'http://127.0.0.1:4000/api';
+const API_BASE_URL = "http://127.0.0.1:4000/api";
+const navigate = useNavigate();
 
 // Configure axios instance
 export const authApi = axios.create({
   baseURL: API_BASE_URL,
   headers: {
-    'Content-Type': 'application/json',
+    "Content-Type": "application/json",
   },
 });
 
-console.log(authApi)
+// console.log(authApi);
 
 // Request interceptor for adding token
 authApi.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('accessToken');
+    const token = localStorage.getItem("accessToken");
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
     return config;
   },
-  (error) => Promise.reject(error)
+  (error) => Promise.reject(error),
 );
 
 // Response interceptor for handling token refresh
@@ -32,25 +34,25 @@ authApi.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
-    
+
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
-      
+
       try {
-        const refreshToken = localStorage.getItem('refreshToken');
-        if (!refreshToken) throw new Error('No refresh token');
-        
+        const refreshToken = localStorage.getItem("refreshToken");
+        if (!refreshToken) throw new Error("No refresh token");
+
         const response = await axios.post(`${API_BASE_URL}/auth/refresh`, {
-          refreshToken
+          refreshToken,
         });
-        
+
         const { accessToken, refreshToken: newRefreshToken } = response.data;
-        
-        localStorage.setItem('accessToken', accessToken);
+
+        localStorage.setItem("accessToken", accessToken);
         if (newRefreshToken) {
-          localStorage.setItem('refreshToken', newRefreshToken);
+          localStorage.setItem("refreshToken", newRefreshToken);
         }
-        
+
         originalRequest.headers.Authorization = `Bearer ${accessToken}`;
         return authApi(originalRequest);
       } catch (refreshError) {
@@ -58,168 +60,195 @@ authApi.interceptors.response.use(
         return Promise.reject(refreshError);
       }
     }
-    
+
     return Promise.reject(error);
-  }
+  },
 );
 
-// Async Thunks
+// 1. Register
+export const register = createAsyncThunk(
+  "auth/register",
+  async (userData, { rejectWithValue }) => {
+    try {
+      await authApi.post("/auth/register", userData);
+      const { status, message, redirect, data } = response.data;
+      console.log(data);
+
+      localStorage.setItem("user_email", data.user.email);
+      // localStorage.setItem("refreshToken", refreshToken);
+      // localStorage.setItem("user", JSON.stringify(user));
+
+      toast.success("تم إنشاء الحساب بنجاح!");
+      navigate(data.redirect);
+      // return { user, accessToken, refreshToken };
+    } catch (error) {
+      const errorMessage = error.response?.data?.message || "فشل إنشاء الحساب";
+      toast.error(errorMessage);
+      return rejectWithValue(errorMessage);
+    }
+  },
+);
+
+// 2. Verify Email && Send Mail
+export const verifyEmail = createAsyncThunk(
+  "auth/verifyEmail",
+  async ({ code }, { rejectWithValue }) => {
+    try {
+      const email = localStorage.getItem("user_email");
+      const response = await authApi.post("/auth/verify-email", {
+        email,
+        code,
+      });
+
+      const { status, message, redirect, data } = response.data;
+      localStorage.setItem("accessToken", data.tokens.accessToken);
+      localStorage.setItem("refreshToken", data.tokens.refreshToken);
+      // localStorage.setItem("user", JSON.stringify(user));
+
+      navigate(redirect);
+      // toast.success("");
+      return true;
+    } catch (error) {
+      const errorMessage =
+        error.response?.data?.message || "فشل تغيير كلمة المرور";
+      toast.error(errorMessage);
+      return rejectWithValue(errorMessage);
+    }
+  },
+);
+
+// 3. Login
 export const login = createAsyncThunk(
-  'auth/login',
+  "auth/login",
   async ({ email, password, rememberMe }, { rejectWithValue }) => {
     try {
-      const response = await authApi.post('/auth/login', {
+      const response = await authApi.post("/auth/login", {
         email,
         password,
-        rememberMe
       });
 
       const { user, accessToken, refreshToken } = response.data;
 
       // Store tokens
-      localStorage.setItem('accessToken', accessToken);
-      localStorage.setItem('refreshToken', refreshToken);
-      localStorage.setItem('user', JSON.stringify(user));
-      
-      toast.success('تم تسجيل الدخول بنجاح!');
+      localStorage.setItem("accessToken", accessToken);
+      localStorage.setItem("refreshToken", refreshToken);
+      localStorage.setItem("user", JSON.stringify(user));
+
+      if (rememberMe) {
+        localStorage.setItem(
+          "credit_data",
+          JSON.stringify({ email, password }),
+        );
+      }
+
+      toast.success("تم تسجيل الدخول بنجاح!");
       return { user, accessToken, refreshToken };
     } catch (error) {
-      const errorMessage = error.response?.data?.message || 'فشل تسجيل الدخول';
+      const errorMessage = error.response?.data?.message || "فشل تسجيل الدخول";
       toast.error(errorMessage);
       return rejectWithValue(errorMessage);
     }
-  }
+  },
 );
 
-export const register = createAsyncThunk(
-  'auth/register',
-  async (userData, { rejectWithValue }) => {
+// 4. Forgot Password
+export const forgotPassword = createAsyncThunk(
+  "auth/forgotPassword",
+  async (email, { rejectWithValue }) => {
     try {
-      const response = await authApi.post('/auth/register', userData);
-      const { user, accessToken, refreshToken } = response.data;
-      
-      localStorage.setItem('accessToken', accessToken);
-      localStorage.setItem('refreshToken', refreshToken);
-      localStorage.setItem('user', JSON.stringify(user));
-      
-      toast.success('تم إنشاء الحساب بنجاح!');
-      return { user, accessToken, refreshToken };
+      await authApi.post("/auth/forgot-password", { email });
+      toast.success(
+        "تم إرسال رابط إعادة تعيين كلمة المرور إلى بريدك الإلكتروني",
+      );
+      return true;
     } catch (error) {
-      const errorMessage = error.response?.data?.message || 'فشل إنشاء الحساب';
+      const errorMessage =
+        error.response?.data?.message || "فشل إرسال رابط إعادة التعيين";
       toast.error(errorMessage);
       return rejectWithValue(errorMessage);
     }
-  }
+  },
 );
 
+// 5. Reset Password
+export const resetPassword = createAsyncThunk(
+  "auth/resetPassword",
+  async ({ token, newPassword }, { rejectWithValue }) => {
+    try {
+      await authApi.post("/auth/reset-password", {
+        token,
+        newPassword,
+      });
+      toast.success("تم إعادة تعيين كلمة المرور بنجاح");
+      return true;
+    } catch (error) {
+      const errorMessage =
+        error.response?.data?.message || "فشل إعادة تعيين كلمة المرور";
+      toast.error(errorMessage);
+      return rejectWithValue(errorMessage);
+    }
+  },
+);
+
+// 6. Logout
 export const logout = createAsyncThunk(
-  'auth/logout',
+  "auth/logout",
   async (_, { getState, rejectWithValue }) => {
     try {
       const { auth } = getState();
       if (auth.accessToken) {
-        await authApi.post('/auth/logout', {
-          refreshToken: localStorage.getItem('refreshToken')
+        await authApi.post("/auth/logout", {
+          refreshToken: localStorage.getItem("refreshToken"),
         });
       }
-      
+
       // Clear storage
-      localStorage.removeItem('accessToken');
-      localStorage.removeItem('refreshToken');
-      localStorage.removeItem('user');
-      
-      toast.success('تم تسجيل الخروج بنجاح');
+      localStorage.removeItem("accessToken");
+      localStorage.removeItem("refreshToken");
+      localStorage.removeItem("user");
+
+      toast.success("تم تسجيل الخروج بنجاح");
       return true;
     } catch (error) {
-      console.error('Logout error:', error);
+      console.error("Logout error:", error);
       // Still clear local storage even if API fails
-      localStorage.removeItem('accessToken');
-      localStorage.removeItem('refreshToken');
-      localStorage.removeItem('user');
-      return rejectWithValue('فشل تسجيل الخروج');
+      localStorage.removeItem("accessToken");
+      localStorage.removeItem("refreshToken");
+      localStorage.removeItem("user");
+      return rejectWithValue("فشل تسجيل الخروج");
     }
-  }
+  },
 );
 
 export const verifyToken = createAsyncThunk(
-  'auth/verifyToken',
+  "auth/verifyToken",
   async (_, { rejectWithValue }) => {
     try {
-      await authApi.get('/auth/verify-token');
+      await authApi.get("/auth/verify-token");
       return true;
     } catch (error) {
-      return rejectWithValue('انتهت صلاحية الجلسة');
+      return rejectWithValue("انتهت صلاحية الجلسة");
     }
-  }
+  },
 );
 
 export const updateProfile = createAsyncThunk(
-  'auth/updateProfile',
+  "auth/updateProfile",
   async (userData, { rejectWithValue }) => {
     try {
-      const response = await authApi.put('/auth/profile', userData);
+      const response = await authApi.put("/auth/profile", userData);
       const updatedUser = response.data;
-      
-      localStorage.setItem('user', JSON.stringify(updatedUser));
-      toast.success('تم تحديث الملف الشخصي بنجاح');
+
+      localStorage.setItem("user", JSON.stringify(updatedUser));
+      toast.success("تم تحديث الملف الشخصي بنجاح");
       return updatedUser;
     } catch (error) {
-      const errorMessage = error.response?.data?.message || 'فشل تحديث الملف الشخصي';
+      const errorMessage =
+        error.response?.data?.message || "فشل تحديث الملف الشخصي";
       toast.error(errorMessage);
       return rejectWithValue(errorMessage);
     }
-  }
-);
-
-export const changePassword = createAsyncThunk(
-  'auth/changePassword',
-  async ({ currentPassword, newPassword }, { rejectWithValue }) => {
-    try {
-      await authApi.put('/auth/change-password', {
-        currentPassword,
-        newPassword
-      });
-      toast.success('تم تغيير كلمة المرور بنجاح');
-      return true;
-    } catch (error) {
-      const errorMessage = error.response?.data?.message || 'فشل تغيير كلمة المرور';
-      toast.error(errorMessage);
-      return rejectWithValue(errorMessage);
-    }
-  }
-);
-
-export const forgotPassword = createAsyncThunk(
-  'auth/forgotPassword',
-  async (email, { rejectWithValue }) => {
-    try {
-      await authApi.post('/auth/forgot-password', { email });
-      toast.success('تم إرسال رابط إعادة تعيين كلمة المرور إلى بريدك الإلكتروني');
-      return true;
-    } catch (error) {
-      const errorMessage = error.response?.data?.message || 'فشل إرسال رابط إعادة التعيين';
-      toast.error(errorMessage);
-      return rejectWithValue(errorMessage);
-    }
-  }
-);
-
-export const resetPassword = createAsyncThunk(
-  'auth/resetPassword',
-  async ({ token, newPassword }, { rejectWithValue }) => {
-    try {
-      await authApi.post('/auth/reset-password', {
-        token,
-        newPassword
-      });
-      toast.success('تم إعادة تعيين كلمة المرور بنجاح');
-      return true;
-    } catch (error) {
-      const errorMessage = error.response?.data?.message || 'فشل إعادة تعيين كلمة المرور';
-      toast.error(errorMessage);
-      return rejectWithValue(errorMessage);
-    }
-  }
+  },
 );
 
 // Initial state
@@ -237,7 +266,7 @@ const initialState = {
 
 // Auth Slice
 const authSlice = createSlice({
-  name: 'auth',
+  name: "auth",
   initialState,
   reducers: {
     setCredentials: (state, action) => {
@@ -256,19 +285,19 @@ const authSlice = createSlice({
       state.verificationRequired = action.payload;
     },
     loadUserFromStorage: (state) => {
-      const storedUser = localStorage.getItem('user');
-      const accessToken = localStorage.getItem('accessToken');
+      const storedUser = localStorage.getItem("user");
+      const accessToken = localStorage.getItem("accessToken");
 
       if (storedUser && accessToken) {
         try {
           state.user = JSON.parse(storedUser);
           state.accessToken = accessToken;
-          state.refreshToken = localStorage.getItem('refreshToken');
+          state.refreshToken = localStorage.getItem("refreshToken");
           state.isAuthenticated = true;
           state.roles = state.user?.roles || [];
           state.permissions = state.user?.permissions || [];
         } catch (error) {
-          console.error('Failed to parse stored user:', error);
+          console.error("Failed to parse stored user:", error);
           state.isAuthenticated = false;
         }
       }
@@ -295,7 +324,7 @@ const authSlice = createSlice({
         state.isLoading = false;
         state.error = action.payload;
       })
-      
+
       // Register
       .addCase(register.pending, (state) => {
         state.isLoading = true;
@@ -315,7 +344,7 @@ const authSlice = createSlice({
         state.isLoading = false;
         state.error = action.payload;
       })
-      
+
       // Logout
       .addCase(logout.pending, (state) => {
         state.isLoading = true;
@@ -334,7 +363,7 @@ const authSlice = createSlice({
       .addCase(logout.rejected, (state) => {
         state.isLoading = false;
       })
-      
+
       // Verify Token
       .addCase(verifyToken.pending, (state) => {
         state.isLoading = true;
@@ -345,7 +374,7 @@ const authSlice = createSlice({
       })
       .addCase(verifyToken.rejected, (state, action) => {
         state.isLoading = false;
-        if (action.payload === 'انتهت صلاحية الجلسة') {
+        if (action.payload === "انتهت صلاحية الجلسة") {
           state.user = null;
           state.accessToken = null;
           state.refreshToken = null;
@@ -354,7 +383,7 @@ const authSlice = createSlice({
           state.permissions = [];
         }
       })
-      
+
       // Update Profile
       .addCase(updateProfile.pending, (state) => {
         state.isLoading = true;
@@ -369,21 +398,21 @@ const authSlice = createSlice({
         state.isLoading = false;
         state.error = action.payload;
       })
-      
+
       // Change Password
-      .addCase(changePassword.pending, (state) => {
+      .addCase(verifyEmail.pending, (state) => {
         state.isLoading = true;
         state.error = null;
       })
-      .addCase(changePassword.fulfilled, (state) => {
+      .addCase(verifyEmail.fulfilled, (state) => {
         state.isLoading = false;
         state.error = null;
       })
-      .addCase(changePassword.rejected, (state, action) => {
+      .addCase(verifyEmail.rejected, (state, action) => {
         state.isLoading = false;
         state.error = action.payload;
       })
-      
+
       // Forgot Password
       .addCase(forgotPassword.pending, (state) => {
         state.isLoading = true;
@@ -397,7 +426,7 @@ const authSlice = createSlice({
         state.isLoading = false;
         state.error = action.payload;
       })
-      
+
       // Reset Password
       .addCase(resetPassword.pending, (state) => {
         state.isLoading = true;
@@ -415,11 +444,11 @@ const authSlice = createSlice({
 });
 
 // Export actions
-export const { 
-  setCredentials, 
-  clearError, 
+export const {
+  setCredentials,
+  clearError,
   setVerificationRequired,
-  loadUserFromStorage 
+  loadUserFromStorage,
 } = authSlice.actions;
 
 // Selectors
@@ -429,7 +458,8 @@ export const selectAuthLoading = (state) => state.auth.isLoading;
 export const selectAuthError = (state) => state.auth.error;
 export const selectUserRoles = (state) => state.auth.roles;
 export const selectUserPermissions = (state) => state.auth.permissions;
-export const selectVerificationRequired = (state) => state.auth.verificationRequired;
+export const selectVerificationRequired = (state) =>
+  state.auth.verificationRequired;
 export const selectAccessToken = (state) => state.auth.accessToken;
 
 // Helper selectors

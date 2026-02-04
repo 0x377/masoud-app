@@ -20,8 +20,8 @@ const Register = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [formData, setFormData] = useState({
-    firstName: "",
-    lastName: "",
+    // firstName: "",
+    // lastName: "",
     fullName: "",
     email: "",
     phone: "",
@@ -70,8 +70,8 @@ const Register = () => {
     if (
       field === "email" ||
       field === "phone" ||
-      field === "firstName" ||
-      field === "lastName"
+      // field === "firstName" ||
+      field === "fullName"
     ) {
       validateField(field, formData[field]);
     }
@@ -376,14 +376,17 @@ const Register = () => {
     clearError();
 
     try {
+      if (userData.password !== userData.password_confirmation) {
+        setErrors({password: "Not match passwords"})
+      }
       // Prepare user data for registration
       const userData = {
-        full_name_arabic: `${formData.firstName} ${formData.lastName}`,
-        full_name_english: `${formData.firstName} ${formData.lastName}`,
+        // full_name_arabic: `${formData.firstName} ${formData.lastName}`,
+        // full_name_english: `${formData.firstName} ${formData.lastName}`,
+        fullName: formData.fullName,
         email: formData.email,
         phone_number: formData.phone,
         password: formData.password,
-        password_confirmation: formData.confirmPassword,
         company: formData.company || "",
         user_type: "FAMILY_MEMBER",
         terms_accepted: formData.agreeToTerms,
@@ -398,14 +401,14 @@ const Register = () => {
 
         // Don't redirect immediately - wait for email verification
         // Instead, show verification message
-        setTimeout(() => {
-          navigate("/verify-email", {
-            state: {
-              email: formData.email,
-              from: from,
-            },
-          });
-        }, 2000);
+        // setTimeout(() => {
+        //   navigate("/verify-email", {
+        //     state: {
+        //       email: formData.email,
+        //       from: from,
+        //     },
+        //   });
+        // }, 2000);
       } else if (result.type === "auth/register/rejected") {
         setErrors({ general: result.payload || "فشل التسجيل" });
       }

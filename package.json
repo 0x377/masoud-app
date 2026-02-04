@@ -18,6 +18,7 @@
   "author": "Ahmed Gamal",
   "license": "ISC",
   "dependencies": {
+    "@sendgrid/mail": "^8.1.6",
     "bcryptjs": "^3.0.3",
     "cls-hooked": "^4.2.2",
     "commander": "^14.0.2",

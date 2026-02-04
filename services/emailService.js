@@ -6,6 +6,7 @@ import {
   BASE_TEMPLATE_MAIL,
   VERIFY_MAIL,
   RESET_PASSWORD,
+  VERIFY_CODE,
 } from "../tempMail/index.js";
 
 class EmailService {
@@ -21,11 +22,39 @@ class EmailService {
         host: "smtp.gmail.com",
         port: 587,
         auth: {
-          user: "test@ethereal.email",
-          pass: "test-password",
+          user: "gamaymaster2022@gmail.com",
+          pass: "this_is_real_account",
         },
       });
       this.useSendGrid = false;
+    }
+  }
+
+  async sendVerificationCode(email, code) {
+    // get veyfiy email template and replace
+    const title = BASE_TEMPLATE_MAIL.replace("TITLE", title_list.veryifyEmail);
+    const getVerifyCode = VERIFY_CODE.replace("CODE", code);
+    const html = title.replace("CONTENT", getVerifyCode);
+
+    const mailOptions = {
+      from: config.email.from,
+      to: email,
+      subject: "Verify Your Email Address",
+      html: html,
+      text: `Please verify your email by clicking this link: ${verificationUrl}`,
+    };
+
+    try {
+      if (this.useSendGrid) {
+        await this.transporter.send(mailOptions);
+      } else {
+        await this.transporter.sendMail(mailOptions);
+      }
+      console.log(`Verification email sent to ${email}`);
+      return true;
+    } catch (error) {
+      console.error("Error sending verification email:", error);
+      throw new Error("Failed to send verification email");
     }
   }
 
@@ -33,9 +62,9 @@ class EmailService {
     const verificationUrl = `${config.app.url}/api/auth/verify-email?token=${verificationToken}`;
 
     // get veyfiy email template and replace
-    const title = VERIFY_MAIL.replace('TITLE', title_list.veryifyEmail);
-    const getVerifyMail = title.replace("URL", verificationUrl);
-    const html = BASE_TEMPLATE_MAIL.replace("CONTENT", getVerifyMail);
+    const title = BASE_TEMPLATE_MAIL.replace("TITLE", title_list.veryifyEmail);
+    const getVerifyMail = VERIFY_MAIL.replace("URL", verificationUrl);
+    const html = title.replace("CONTENT", getVerifyMail);
 
     const mailOptions = {
       from: config.email.from,
@@ -62,17 +91,16 @@ class EmailService {
   async sendPasswordResetEmail(email, resetToken) {
     const resetUrl = `${config.app.url}/reset-password?token=${resetToken}`;
 
+    // get veyfiy email template and replace
+    const title = BASE_TEMPLATE_MAIL.replace("TITLE", title_list.resetPassword);
+    const getResetPassword = RESET_PASSWORD.replace("URL", resetUrl);
+    const html = title.replace("CONTENT", getResetPassword);
+
     const mailOptions = {
       from: config.email.from,
       to: email,
       subject: "Password Reset Request",
-      html: `
-        <h2>Password Reset</h2>
-        <p>You requested a password reset. Click the link below to reset your password:</p>
-        <a href="${resetUrl}">Reset Password</a>
-        <p>This link will expire in 1 hour.</p>
-        <p>If you didn't request this, please ignore this email.</p>
-      `,
+      html: html,
       text: `Reset your password: ${resetUrl}`,
     };
 
