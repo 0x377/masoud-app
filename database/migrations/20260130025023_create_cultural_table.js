@@ -1,5 +1,5 @@
 /**
- * Migration: create_cultural_table
+ * Migration: create_cultural_table   اللجنة الثقافية
  */
 
 export const up = async (queryInterface) => {

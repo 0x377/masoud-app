@@ -24,7 +24,7 @@ export const up = async (queryInterface) => {
       created_by CHAR(36),
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-      
+
       UNIQUE KEY uk_person_tree (person_id, family_tree_id),
       
       CONSTRAINT fk_node_person 
@@ -91,33 +91,33 @@ export const up = async (queryInterface) => {
       created_by CHAR(36),
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-      
+
       UNIQUE KEY uk_person_relationship (person_id, related_person_id, relationship_type),
-      
+
       CONSTRAINT fk_relationship_person 
         FOREIGN KEY (person_id) 
         REFERENCES persons(id) 
         ON DELETE CASCADE 
         ON UPDATE CASCADE,
-      
+
       CONSTRAINT fk_relationship_related_person 
         FOREIGN KEY (related_person_id) 
         REFERENCES persons(id) 
         ON DELETE CASCADE 
         ON UPDATE CASCADE,
-      
+
       CONSTRAINT fk_relationship_verified_by 
         FOREIGN KEY (verified_by) 
         REFERENCES users(id) 
         ON DELETE SET NULL 
         ON UPDATE CASCADE,
-      
+
       CONSTRAINT fk_relationship_created_by 
         FOREIGN KEY (created_by) 
         REFERENCES users(id) 
         ON DELETE SET NULL 
         ON UPDATE CASCADE,
-      
+
       INDEX idx_person_id (person_id),
       INDEX idx_related_person_id (related_person_id),
       INDEX idx_relationship_type (relationship_type),

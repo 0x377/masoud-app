@@ -1,4 +1,4 @@
-import BaseModel from '../BaseModel.js';
+import BaseModel from '../../libs/BaseModel.js';
 
 class ExecutiveCommittee extends BaseModel {
   constructor() {

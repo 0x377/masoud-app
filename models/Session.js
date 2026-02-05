@@ -1,17 +1,17 @@
-import BaseModel from './BaseModel.js';
-import crypto from 'crypto';
-import db from '../database/database.js';
+import BaseModel from '../libs/BaseModel.js';
+import crypto from "crypto";
+import db from "../database/database.js";
 
 class Session extends BaseModel {
   constructor() {
-    super('sessions', 'id');
+    super("sessions", "id");
     this.softDelete = false; // Sessions don't use soft delete
   }
 
   // Create session
   async createSession(userId, payload, deviceInfo = {}, ipAddress = null) {
     const sessionId = this.generateSessionId();
-    
+
     const data = {
       id: sessionId,
       user_id: userId,
@@ -21,7 +21,7 @@ class Session extends BaseModel {
       last_activity: Math.floor(Date.now() / 1000),
       device_id: deviceInfo.deviceId || null,
       device_name: deviceInfo.deviceName || null,
-      device_type: deviceInfo.deviceType || 'web',
+      device_type: deviceInfo.deviceType || "web",
       browser: deviceInfo.browser || null,
       browser_version: deviceInfo.browserVersion || null,
       platform: deviceInfo.platform || null,
@@ -34,7 +34,7 @@ class Session extends BaseModel {
       longitude: deviceInfo.longitude || null,
       login_at: this.formatDate(new Date()),
       last_seen_at: this.formatDate(new Date()),
-      is_active: true
+      is_active: true,
     };
 
     return await this.create(data);
@@ -42,7 +42,7 @@ class Session extends BaseModel {
 
   // Generate session ID
   generateSessionId() {
-    return crypto.randomBytes(32).toString('hex');
+    return crypto.randomBytes(32).toString("hex");
   }
 
   // Find active session
@@ -55,8 +55,8 @@ class Session extends BaseModel {
     `;
 
     // Sessions expire after 24 hours of inactivity
-    const minLastActivity = Math.floor(Date.now() / 1000) - (24 * 60 * 60);
-    
+    const minLastActivity = Math.floor(Date.now() / 1000) - 24 * 60 * 60;
+
     const results = await db.query(sql, [sessionId, minLastActivity]);
     return results[0] || null;
   }
@@ -75,7 +75,7 @@ class Session extends BaseModel {
     await db.query(sql, [
       Math.floor(Date.now() / 1000),
       this.formatDate(new Date()),
-      sessionId
+      sessionId,
     ]);
   }
 
@@ -83,7 +83,7 @@ class Session extends BaseModel {
   async endSession(sessionId) {
     await this.update(sessionId, {
       is_active: false,
-      last_seen_at: this.formatDate(new Date())
+      last_seen_at: this.formatDate(new Date()),
     });
   }
 
@@ -97,9 +97,9 @@ class Session extends BaseModel {
     `;
 
     const params = [userId];
-    
+
     if (excludeSessionId) {
-      sql += ' AND id != ?';
+      sql += " AND id != ?";
       params.push(excludeSessionId);
     }
 
@@ -114,10 +114,10 @@ class Session extends BaseModel {
     `;
 
     if (activeOnly) {
-      sql += ' AND is_active = TRUE';
+      sql += " AND is_active = TRUE";
     }
 
-    sql += ' ORDER BY last_activity DESC';
+    sql += " ORDER BY last_activity DESC";
 
     return await db.query(sql, [userId]);
   }
@@ -130,14 +130,14 @@ class Session extends BaseModel {
       WHERE last_activity < ?
     `;
 
-    const minLastActivity = Math.floor(Date.now() / 1000) - (30 * 24 * 60 * 60);
+    const minLastActivity = Math.floor(Date.now() / 1000) - 30 * 24 * 60 * 60;
     const result = await db.query(sql, [minLastActivity]);
     return result.affectedRows || 0;
   }
 
   // Get session statistics
   async getSessionStats(userId = null) {
-    let sql = '';
+    let sql = "";
     const params = [];
 
     if (userId) {
@@ -183,11 +183,11 @@ class Session extends BaseModel {
       country: deviceInfo.country,
       city: deviceInfo.city,
       latitude: deviceInfo.latitude,
-      longitude: deviceInfo.longitude
+      longitude: deviceInfo.longitude,
     };
 
     // Remove null values
-    Object.keys(updates).forEach(key => {
+    Object.keys(updates).forEach((key) => {
       if (updates[key] === null) delete updates[key];
     });
 
@@ -206,9 +206,9 @@ class Session extends BaseModel {
     `;
 
     const params = [userId];
-    
+
     if (deviceId) {
-      sql += ' AND device_id = ?';
+      sql += " AND device_id = ?";
       params.push(deviceId);
     }
 

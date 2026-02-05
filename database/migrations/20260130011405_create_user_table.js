@@ -343,48 +343,48 @@ export const up = async (queryInterface) => {
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
   `);
 
-  console.log("✅ Login histories table created");
+  // console.log("✅ Login histories table created");
 
-  // Create security logs table
-  await queryInterface.execute(`
-    CREATE TABLE IF NOT EXISTS security_logs (
-      id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
-      user_id CHAR(36),
-      severity ENUM('LOW', 'MEDIUM', 'HIGH', 'CRITICAL') NOT NULL,
-      action VARCHAR(255) NOT NULL,
-      description TEXT NOT NULL,
-      ip_address VARCHAR(45),
-      user_agent TEXT,
-      old_values JSON,
-      new_values JSON,
-      metadata JSON,
-      affected_user_id CHAR(36) COMMENT 'User affected by this action',
-      affected_table VARCHAR(255),
-      affected_record_id CHAR(36),
-      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  // // Create security logs table
+  // await queryInterface.execute(`
+  //   CREATE TABLE IF NOT EXISTS security_logs (
+  //     id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
+  //     user_id CHAR(36),
+  //     severity ENUM('LOW', 'MEDIUM', 'HIGH', 'CRITICAL') NOT NULL,
+  //     action VARCHAR(255) NOT NULL,
+  //     description TEXT NOT NULL,
+  //     ip_address VARCHAR(45),
+  //     user_agent TEXT,
+  //     old_values JSON,
+  //     new_values JSON,
+  //     metadata JSON,
+  //     affected_user_id CHAR(36) COMMENT 'User affected by this action',
+  //     affected_table VARCHAR(255),
+  //     affected_record_id CHAR(36),
+  //     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  //     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
       
-      -- Indexes
-      INDEX idx_user_severity_created (user_id, severity, created_at),
-      INDEX idx_severity (severity),
-      INDEX idx_action (action),
-      INDEX idx_affected_user (affected_user_id),
-      INDEX idx_created_at (created_at),
+  //     -- Indexes
+  //     INDEX idx_user_severity_created (user_id, severity, created_at),
+  //     INDEX idx_severity (severity),
+  //     INDEX idx_action (action),
+  //     INDEX idx_affected_user (affected_user_id),
+  //     INDEX idx_created_at (created_at),
       
-      -- Foreign key constraints
-      CONSTRAINT fk_security_logs_user FOREIGN KEY (user_id) 
-        REFERENCES users(id) 
-        ON DELETE SET NULL 
-        ON UPDATE CASCADE,
+  //     -- Foreign key constraints
+  //     CONSTRAINT fk_security_logs_user FOREIGN KEY (user_id) 
+  //       REFERENCES users(id) 
+  //       ON DELETE SET NULL 
+  //       ON UPDATE CASCADE,
       
-      CONSTRAINT fk_security_logs_affected_user FOREIGN KEY (affected_user_id) 
-        REFERENCES users(id) 
-        ON DELETE SET NULL 
-        ON UPDATE CASCADE
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-  `);
+  //     CONSTRAINT fk_security_logs_affected_user FOREIGN KEY (affected_user_id) 
+  //       REFERENCES users(id) 
+  //       ON DELETE SET NULL 
+  //       ON UPDATE CASCADE
+  //   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  // `);
 
-  console.log("✅ Security logs table created");
+  // console.log("✅ Security logs table created");
 
   // Create password history table
   await queryInterface.execute(`
@@ -427,21 +427,21 @@ export const up = async (queryInterface) => {
       grant_reason TEXT,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-      
+
       -- Unique constraint
       UNIQUE KEY uk_user_permission (user_id, permission),
-      
+
       -- Indexes
       INDEX idx_user_allowed (user_id, is_allowed),
       INDEX idx_permission (permission),
       INDEX idx_expires_at (expires_at),
-      
+
       -- Foreign key constraint
       CONSTRAINT fk_user_permissions_user FOREIGN KEY (user_id) 
         REFERENCES users(id) 
         ON DELETE CASCADE 
         ON UPDATE CASCADE,
-      
+
       CONSTRAINT fk_user_permissions_granted_by FOREIGN KEY (granted_by) 
         REFERENCES users(id) 
         ON DELETE SET NULL 
@@ -516,7 +516,7 @@ export const down = async (queryInterface) => {
   // Drop tables in reverse order (due to foreign key constraints)
   await queryInterface.execute("DROP TABLE IF EXISTS user_permissions");
   await queryInterface.execute("DROP TABLE IF EXISTS password_history");
-  await queryInterface.execute("DROP TABLE IF EXISTS security_logs");
+  // await queryInterface.execute("DROP TABLE IF EXISTS security_logs");
   await queryInterface.execute("DROP TABLE IF EXISTS login_histories");
   await queryInterface.execute("DROP TABLE IF EXISTS verification_codes");
   await queryInterface.execute("DROP TABLE IF EXISTS sessions");

@@ -1,4 +1,4 @@
-import BaseModel from "./BaseModel.js";
+import BaseModel from '../libs/BaseModel.js';
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
 import validator from "validator";

@@ -1,4 +1,4 @@
-import BaseModel from "./BaseModel.js";
+import BaseModel from '../libs/BaseModel.js';
 import db from "../database/database.js";
 import validator from "validator";
 
