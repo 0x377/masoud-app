@@ -5,7 +5,53 @@
 export const up = async (queryInterface) => {
   console.log("📦 Creating Donation Platform Tables...");
 
-  // 1.1 Donation Categories - FIXED table name
+  // 1. Create donation_campaigns FIRST (referenced by donations)
+  await queryInterface.execute(`
+    CREATE TABLE IF NOT EXISTS donation_campaigns (
+      campaign_id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
+      name_arabic VARCHAR(255) NOT NULL,
+      name_english VARCHAR(255),
+      description TEXT,
+      category_id CHAR(36),
+      target_amount DECIMAL(15,2) NOT NULL,
+      current_amount DECIMAL(15,2) DEFAULT 0,
+      start_date DATE,
+      end_date DATE,
+      status ENUM('DRAFT', 'ACTIVE', 'PAUSED', 'COMPLETED', 'CANCELLED') DEFAULT 'DRAFT',
+      cover_image VARCHAR(500),
+      is_featured BOOLEAN DEFAULT FALSE,
+      allow_anonymous BOOLEAN DEFAULT TRUE,
+      allow_dedications BOOLEAN DEFAULT TRUE,
+      bank_account VARCHAR(100),
+      payment_methods JSON,
+      metadata JSON,
+      created_by CHAR(36),
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      
+      CONSTRAINT fk_campaign_category 
+        FOREIGN KEY (category_id) 
+        REFERENCES donation_categories(category_id) 
+        ON DELETE SET NULL 
+        ON UPDATE CASCADE,
+      
+      CONSTRAINT fk_campaign_created_by 
+        FOREIGN KEY (created_by) 
+        REFERENCES users(id) 
+        ON DELETE SET NULL 
+        ON UPDATE CASCADE,
+      
+      INDEX idx_status (status),
+      INDEX idx_dates (start_date, end_date),
+      INDEX idx_target_amount (target_amount),
+      INDEX idx_is_featured (is_featured),
+      FULLTEXT idx_campaign_search (name_arabic, name_english, description)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  `);
+
+  console.log("✅ donation_campaigns table created");
+
+  // 1.1 Donation Categories
   await queryInterface.execute(`
     CREATE TABLE IF NOT EXISTS donation_categories (
       category_id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
@@ -130,8 +176,7 @@ export const up = async (queryInterface) => {
       donation_id CHAR(36) NOT NULL,
       receipt_number VARCHAR(50) UNIQUE NOT NULL,
       receipt_date DATE NOT NULL,
-      -- issued_by CHAR(36),
-      issued_by BIGINT UNSIGNED NULL,
+      issued_by CHAR(36),
       issued_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       template_path VARCHAR(500),
       file_path VARCHAR(500),
@@ -267,6 +312,7 @@ export const down = async (queryInterface) => {
   await queryInterface.execute("DROP TABLE IF EXISTS donation_statistics");
   await queryInterface.execute("DROP TABLE IF EXISTS donations");
   await queryInterface.execute("DROP TABLE IF EXISTS donation_categories");
+  await queryInterface.execute("DROP TABLE IF EXISTS donation_campaigns");
 
   console.log("✅ All donation tables dropped successfully");
 };

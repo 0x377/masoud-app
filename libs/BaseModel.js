@@ -103,18 +103,32 @@ class BaseModel {
     return `LIMIT ${limit} OFFSET ${offset}`;
   }
 
-  // Execute query with error handling
+  // In BaseModel.js, update the executeQuery method:
   async executeQuery(sql, params = []) {
     try {
-      const [results] = await this.db.query(sql, params);
+      // Remove array destructuring since db.query returns results directly
+      const results = await this.db.query(sql, params);
       return results;
     } catch (error) {
       console.error(`Database error in ${this.tableName}:`, error.message);
-      throw new Error(`Database operation failed: ${error.message}`);
+      console.error("SQL:", sql);
+      console.error("Params:", params);
+      // throw new Error(`Database operation failed: ${error.message}`);
     }
   }
 
-  // Find by primary key
+  // Execute query with error handling
+  // async executeQuery(sql, params = []) {
+  //   try {
+  //     const [results] = await this.db.query(sql, params);
+  //     return results;
+  //   } catch (error) {
+  //     console.error(`Database error in ${this.tableName}:`, error.message);
+  //     throw new Error(`Database operation failed: ${error.message}`);
+  //   }
+  // }
+
+  // Update the findById method:
   async findById(id, options = {}) {
     const { includeDeleted = false } = options;
     let sql = `SELECT * FROM ${this.tableName} WHERE ${this.primaryKey} = ?`;
@@ -126,6 +140,19 @@ class BaseModel {
     const results = await this.executeQuery(sql, [id]);
     return results.length > 0 ? results[0] : null;
   }
+
+  // Find by primary key
+  // async findById(id, options = {}) {
+  //   const { includeDeleted = false } = options;
+  //   let sql = `SELECT * FROM ${this.tableName} WHERE ${this.primaryKey} = ?`;
+
+  //   if (!includeDeleted && this.softDelete) {
+  //     sql += " AND deleted_at IS NULL";
+  //   }
+
+  //   const results = await this.executeQuery(sql, [id]);
+  //   return results.length > 0 ? results[0] : null;
+  // }
 
   // Find all with filtering and pagination
   async findAll(filters = {}, options = {}) {
@@ -189,7 +216,7 @@ class BaseModel {
     };
   }
 
-  // Create new record
+  // Update the create method in BaseModel.js:
   async create(data) {
     const id = data[this.primaryKey] || this.generateId();
     const now = new Date();
@@ -215,13 +242,49 @@ class BaseModel {
     const values = Object.values(record);
 
     const sql = `
-      INSERT INTO ${this.tableName} (${columns})
-      VALUES (${placeholders})
-    `;
+    INSERT INTO ${this.tableName} (${columns})
+    VALUES (${placeholders})
+  `;
 
     await this.executeQuery(sql, values);
-    return this.findById(id);
+
+    // Return the newly created record
+    return record;
   }
+
+  // Create new record
+  // async create(data) {
+  //   const id = data[this.primaryKey] || this.generateId();
+  //   const now = new Date();
+
+  //   const record = {
+  //     [this.primaryKey]: id,
+  //     ...data,
+  //     created_at: this.formatDate(data.created_at || now),
+  //     updated_at: this.formatDate(data.updated_at || now),
+  //   };
+
+  //   // Handle JSON fields
+  //   Object.keys(record).forEach((key) => {
+  //     if (typeof record[key] === "object" && record[key] !== null) {
+  //       record[key] = this.stringifyJSON(record[key]);
+  //     }
+  //   });
+
+  //   const columns = Object.keys(record).join(", ");
+  //   const placeholders = Object.keys(record)
+  //     .map(() => "?")
+  //     .join(", ");
+  //   const values = Object.values(record);
+
+  //   const sql = `
+  //     INSERT INTO ${this.tableName} (${columns})
+  //     VALUES (${placeholders})
+  //   `;
+
+  //   await this.executeQuery(sql, values);
+  //   return this.findById(id);
+  // }
 
   // Update record
   async update(id, data) {

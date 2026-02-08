@@ -4,7 +4,7 @@ import Session from "../models/Session.js";
 
 export const authenticate = async (req, res, next) => {
   try {
-    const authHeader = req.headers.authorization;
+    const authHeader = req.headers?.authorization || req.headers?.Authorization;
 
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
       return res.status(401).json({
@@ -18,7 +18,7 @@ export const authenticate = async (req, res, next) => {
 
     if (!decoded || decoded.type !== "access") {
       return res.status(401).json({
-        status: "error",
+        success: false,
         message: "Invalid token",
       });
     }

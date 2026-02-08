@@ -9,6 +9,7 @@ import committeeRoutes from "./executive/committee.route.js";
 import rcommitteeRoutes from "./reconciliation/committee.route.js";
 import caseRoutes from "./reconciliation/case.route.js";
 import reportRoutes from "./reconciliation/report.route.js";
+import msgRoutes from "./msg.route.js";
 
 const router = express.Router();
 
@@ -21,7 +22,7 @@ router.use("/nodes", familyTreeNodeRoutes);
 router.use("/auth", authRoutes);
 
 // Waqf routes
-router.use("/wq", waqfRouter);
+router.use("/waqf", waqfRouter);
 
 // Executive management routes
 router.use("/executives", executiveRoutes);
@@ -31,6 +32,9 @@ router.use("/committees", committeeRoutes);
 router.use("/reconciliation/committees", rcommitteeRoutes);
 router.use("/reconciliation/cases", caseRoutes);
 router.use("/reconciliation/reports", reportRoutes);
+
+// send verify message
+router.use("/msg", msgRoutes);
 
 // Health check route
 router.get("/health", (req, res) => {

@@ -7,12 +7,14 @@
   "scripts": {
     "dev": "nodemon server.js",
     "start": "node server.js",
-    "migrate:create": "node database/migration.js create",
-    "migrate:up": "node database/migration.js up",
-    "migrate:down": "node database/migration.js down",
-    "migrate:seed": "node database/migration.js seed",
-    "migrate:status": "node database/migration.js status",
-    "migrate:reset": "node database/migration.js reset"
+    "migrate:up": "node ./database/migration.js up",
+    "migrate:up:skip": "node ./database/migration.js up --skip-errors",
+    "migrate:down": "node ./database/migration.js down",
+    "migrate:create": "node ./database/migration.js create",
+    "migrate:seed": "node ./database/migration.js seed",
+    "migrate:status": "node ./database/migration.js status",
+    "migrate:reset": "node ./database/migration.js reset",
+    "migrate:run-all": "node create-run-migrations.js"
   },
   "keywords": [],
   "author": "Ahmed Gamal",
@@ -36,6 +38,7 @@
     "mysql2": "^3.16.2",
     "nodemailer": "^7.0.13",
     "redis": "^5.10.0",
+    "sequelize": "^6.37.7",
     "uuid": "^13.0.0",
     "validator": "^13.15.26",
     "winston": "^3.19.0",

@@ -189,8 +189,82 @@ class VerificationCode extends BaseModel {
     const result = await db.query(sql);
     return result.affectedRows || 0;
   }
+  static async findOne(options = {}) {
+    const instance = new this();
+    return await instance.findOne(options);
+  }
+
+
+  // async findOne(options = {}) {
+  //   try {
+  //     const { where, order, attributes } = options;
+
+  //     let sql = `SELECT * FROM ${this.tableName}`;
+  //     const params = [];
+
+  //     // بناء شرط WHERE
+  //     if (where) {
+  //       if (typeof where === "string") {
+  //         // إذا كان where عبارة عن سلسلة SQL
+  //         sql += ` WHERE ${where}`;
+  //       } else if (typeof where === "object" && where !== null) {
+  //         // إذا كان where عبارة عن كائن
+  //         const whereConditions = [];
+  //         Object.keys(where).forEach((key) => {
+  //           if (where[key] !== undefined && where[key] !== null) {
+  //             whereConditions.push(`${key} = ?`);
+  //             params.push(where[key]);
+  //           }
+  //         });
+
+  //         if (whereConditions.length > 0) {
+  //           sql += ` WHERE ${whereConditions.join(" AND ")}`;
+  //         }
+  //       }
+  //     }
+
+  //     // بناء ORDER BY
+  //     if (order) {
+  //       if (Array.isArray(order)) {
+  //         // صيغة Sequelize: [["created_at", "DESC"]]
+  //         const orderClauses = order.map(
+  //           ([field, direction]) =>
+  //             `${field} ${direction ? direction.toUpperCase() : "DESC"}`,
+  //         );
+  //         sql += ` ORDER BY ${orderClauses.join(", ")}`;
+  //       } else {
+  //         // صيغة سلسلة نصية
+  //         sql += ` ORDER BY ${order}`;
+  //       }
+  //     } else {
+  //       sql += ` ORDER BY created_at DESC`;
+  //     }
+
+  //     // تحديد الأعمدة المطلوبة
+  //     if (attributes) {
+  //       if (Array.isArray(attributes)) {
+  //         sql = sql.replace("*", attributes.join(", "));
+  //       } else if (typeof attributes === "string") {
+  //         sql = sql.replace("*", attributes);
+  //       }
+  //     }
+
+  //     sql += ` LIMIT 1`;
+
+  //     // تنفيذ الاستعلام
+  //     console.log("SQL Query:", sql); // للت debugging
+  //     console.log("Params:", params); // للت debugging
+
+  //     const results = await db.query(sql, params);
+  //     return results[0] || null;
+  //   } catch (error) {
+  //     console.error("Error in findOne:", error);
+  //     throw error;
+  //   }
+  // }
 
   // Check if user has pending verification
+
   async hasPendingVerification(userId, type) {
     const sql = `
       SELECT COUNT(*) as count

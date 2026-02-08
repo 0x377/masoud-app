@@ -31,7 +31,7 @@ export const up = async (queryInterface) => {
       
       CONSTRAINT fk_waqf_founder 
         FOREIGN KEY (founder_id) 
-        REFERENCES persons(id) 
+        REFERENCES users(id) 
         ON DELETE SET NULL 
         ON UPDATE CASCADE,
       
@@ -81,7 +81,7 @@ export const up = async (queryInterface) => {
       
       CONSTRAINT fk_transaction_beneficiary 
         FOREIGN KEY (beneficiary_id) 
-        REFERENCES persons(id) 
+        REFERENCES users(id) 
         ON DELETE SET NULL 
         ON UPDATE CASCADE,
       
@@ -115,7 +115,7 @@ export const up = async (queryInterface) => {
     CREATE TABLE IF NOT EXISTS waqf_beneficiaries (
       beneficiary_id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
       waqf_id CHAR(36) NOT NULL,
-      person_id CHAR(36) NOT NULL,
+      user_id CHAR(36) NOT NULL,
       relationship ENUM('FAMILY_MEMBER', 'ORPHAN', 'STUDENT', 'NEEDY', 'OTHER') DEFAULT 'FAMILY_MEMBER',
       share_percentage DECIMAL(5,2) COMMENT 'Percentage share of waqf income',
       share_amount DECIMAL(15,2) COMMENT 'Fixed amount if applicable',
@@ -129,7 +129,7 @@ export const up = async (queryInterface) => {
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
       
-      UNIQUE KEY uk_waqf_person (waqf_id, person_id),
+      UNIQUE KEY uk_waqf_user (waqf_id, user_id),
       
       CONSTRAINT fk_beneficiary_waqf 
         FOREIGN KEY (waqf_id) 
@@ -137,9 +137,9 @@ export const up = async (queryInterface) => {
         ON DELETE CASCADE 
         ON UPDATE CASCADE,
       
-      CONSTRAINT fk_beneficiary_person 
-        FOREIGN KEY (person_id) 
-        REFERENCES persons(id) 
+      CONSTRAINT fk_beneficiary_user 
+        FOREIGN KEY (user_id) 
+        REFERENCES users(id) 
         ON DELETE CASCADE 
         ON UPDATE CASCADE,
       
@@ -150,7 +150,7 @@ export const up = async (queryInterface) => {
         ON UPDATE CASCADE,
       
       INDEX idx_waqf_id (waqf_id),
-      INDEX idx_person_id (person_id),
+      INDEX idx_user_id (user_id),
       INDEX idx_status (status),
       INDEX idx_relationship (relationship),
       INDEX idx_distribution_frequency (distribution_frequency)
@@ -164,7 +164,7 @@ export const up = async (queryInterface) => {
     CREATE TABLE IF NOT EXISTS waqf_management_committee (
       committee_id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
       waqf_id CHAR(36) NOT NULL,
-      person_id CHAR(36) NOT NULL,
+      user_id CHAR(36) NOT NULL,
       role ENUM('CHAIRPERSON', 'VICE_CHAIRPERSON', 'TREASURER', 'SECRETARY', 'MEMBER', 'AUDITOR', 'ADVISOR') DEFAULT 'MEMBER',
       start_date DATE NOT NULL,
       end_date DATE,
@@ -176,7 +176,7 @@ export const up = async (queryInterface) => {
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
       
-      UNIQUE KEY uk_waqf_person_role (waqf_id, person_id, role),
+      UNIQUE KEY uk_waqf_user_role (waqf_id, user_id, role),
       
       CONSTRAINT fk_committee_waqf 
         FOREIGN KEY (waqf_id) 
@@ -184,9 +184,9 @@ export const up = async (queryInterface) => {
         ON DELETE CASCADE 
         ON UPDATE CASCADE,
       
-      CONSTRAINT fk_committee_person 
-        FOREIGN KEY (person_id) 
-        REFERENCES persons(id) 
+      CONSTRAINT fk_committee_user 
+        FOREIGN KEY (user_id) 
+        REFERENCES users(id) 
         ON DELETE CASCADE 
         ON UPDATE CASCADE,
       
@@ -197,7 +197,7 @@ export const up = async (queryInterface) => {
         ON UPDATE CASCADE,
       
       INDEX idx_waqf_id (waqf_id),
-      INDEX idx_person_id (person_id),
+      INDEX idx_user_id (user_id),
       INDEX idx_role (role),
       INDEX idx_is_active (is_active),
       INDEX idx_dates (start_date, end_date)
@@ -481,109 +481,3 @@ export const down = async (queryInterface) => {
 
   console.log("✅ All family waqf tables dropped successfully");
 };
-
-
-
-
-
-
-
-// /**
-//  * Migration: create_waqf_table
-//  */
-
-// export const up = async (queryInterface) => {
-//   console.log("📦 Creating Section 3: Family Waqf...");
-
-//   await queryInterface.execute(`
-//     CREATE TABLE IF NOT EXISTS family_waqf (
-//       waqf_id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
-//       name_arabic VARCHAR(255) NOT NULL,
-//       name_english VARCHAR(255),
-//       description TEXT,
-//       waqf_type ENUM('CASH', 'PROPERTY', 'LAND', 'BUSINESS', 'OTHER') NOT NULL,
-//       establishment_date DATE,
-//       founder_id CHAR(36),
-//       current_value DECIMAL(15,2),
-//       estimated_annual_return DECIMAL(15,2),
-//       beneficiaries JSON COMMENT 'Who benefits from this waqf',
-//       management_committee JSON COMMENT 'Committee managing this waqf',
-//       documents JSON COMMENT 'Waqf documents and contracts',
-//       location JSON COMMENT 'Geographic location if property/land',
-//       status ENUM('ACTIVE', 'INACTIVE', 'SUSPENDED', 'LIQUIDATED') DEFAULT 'ACTIVE',
-//       income_distribution_rules JSON,
-//       special_conditions TEXT,
-//       metadata JSON,
-//       created_by CHAR(36),
-//       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-//       updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-      
-//       CONSTRAINT fk_waqf_founder 
-//         FOREIGN KEY (founder_id) 
-//         REFERENCES persons(person_id) 
-//         ON DELETE SET NULL 
-//         ON UPDATE CASCADE,
-      
-//       INDEX idx_waqf_type (waqf_type),
-//       INDEX idx_status (status),
-//       INDEX idx_establishment_date (establishment_date),
-//       INDEX idx_current_value (current_value)
-//     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-//   `);
-
-//   // Waqf Transactions
-//   await queryInterface.execute(`
-//     CREATE TABLE IF NOT EXISTS waqf_transactions (
-//       transaction_id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
-//       waqf_id CHAR(36) NOT NULL,
-//       transaction_type ENUM('INCOME', 'EXPENSE', 'INVESTMENT', 'DISTRIBUTION') NOT NULL,
-//       amount DECIMAL(15,2) NOT NULL,
-//       currency CHAR(3) DEFAULT 'SAR',
-//       description TEXT,
-//       transaction_date DATE NOT NULL,
-//       reference_number VARCHAR(100),
-//       bank_statement_path VARCHAR(500),
-//       category VARCHAR(100),
-//       beneficiary_id CHAR(36) COMMENT 'If distribution to beneficiary',
-//       approved_by CHAR(36),
-//       approval_date DATE,
-//       metadata JSON,
-//       created_by CHAR(36),
-//       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-//       updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-      
-//       CONSTRAINT fk_transaction_waqf 
-//         FOREIGN KEY (waqf_id) 
-//         REFERENCES family_waqf(waqf_id) 
-//         ON DELETE CASCADE 
-//         ON UPDATE CASCADE,
-      
-//       CONSTRAINT fk_transaction_beneficiary 
-//         FOREIGN KEY (beneficiary_id) 
-//         REFERENCES persons(person_id) 
-//         ON DELETE SET NULL 
-//         ON UPDATE CASCADE,
-      
-//       CONSTRAINT fk_transaction_approver 
-//         FOREIGN KEY (approved_by) 
-//         REFERENCES persons(person_id) 
-//         ON DELETE SET NULL 
-//         ON UPDATE CASCADE,
-      
-//       INDEX idx_waqf_id (waqf_id),
-//       INDEX idx_transaction_type (transaction_type),
-//       INDEX idx_transaction_date (transaction_date),
-//       INDEX idx_amount (amount),
-//       INDEX idx_category (category)
-//     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-//   `);
-
-//   console.log("✅ Section 3 created");
-// };
-
-// export const down = async (queryInterface) => {
-//   // Write your migration DOWN logic here
-//   // This should reverse what up() does
-//   // Example:
-//   // await queryInterface.execute('DROP TABLE IF EXISTS users');
-// };

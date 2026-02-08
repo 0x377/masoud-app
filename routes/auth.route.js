@@ -1,13 +1,12 @@
 import express from "express";
+import { login, logout } from "../controllers/auth/login.controller.js";
+import { register } from "../controllers/auth/register.controller.js";
 import {
-  login,
-  logout,
-  register,
-  verifyEmail,
   forgotPassword,
   resetPassword,
-  verifyToken,
-} from "../controllers/auth.controller.js";
+} from "../controllers/auth/password.controller.js";
+import { verifyEmail } from "../controllers/auth/verify.controller.js";
+import { refreshToken } from "../controllers/auth/token.controller.js";
 
 const router = express.Router();
 
@@ -16,7 +15,7 @@ router.post("/logout", logout);
 router.post("/register", register);
 router.post("/verify-email", verifyEmail);
 router.post("/forgot-password", forgotPassword);
-router.post("/reset-password", resetPassword);
-router.get("/verify", verifyToken);
+router.get("/reset-password/:token", resetPassword);
+router.post("/refresh-token", refreshToken);
 
 export default router;

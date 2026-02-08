@@ -1,6 +1,5 @@
 /**
- * Migration: Comprehensive Family Management System
- * Based on the 10-section platform requirements
+ * Migration: Comprehensive Family Management System - FIXED VERSION
  */
 
 export const up = async (queryInterface) => {
@@ -120,20 +119,9 @@ export const up = async (queryInterface) => {
   // ============================================
   console.log("📝 Inserting default data...");
 
-  // Insert default donation categories
-  await queryInterface.execute(`
-    INSERT INTO donation_categories (category_id, name_arabic, name_english, sort_order) VALUES
-    (UUID(), 'الزكاة', 'Zakat', 1),
-    (UUID(), 'الصدقة', 'Sadaqah', 2),
-    (UUID(), 'وقف', 'Waqf', 3),
-    (UUID(), 'كفالة', 'Sponsorship', 4),
-    (UUID(), 'مشاريع خيرية', 'Charity Projects', 5),
-    (UUID(), 'إغاثة', 'Relief', 6);
-  `);
-
   // Insert access control matrix
   await queryInterface.execute(`
-    INSERT INTO access_control_matrix (user_type, section_id, permission_level) VALUES
+    INSERT IGNORE INTO access_control_matrix (user_type, section_id, permission_level) VALUES
     -- Super Admin has full access to all sections
     ('SUPER_ADMIN', 1, 'ADMIN'),
     ('SUPER_ADMIN', 2, 'ADMIN'),
@@ -184,56 +172,61 @@ export const up = async (queryInterface) => {
   console.log("✅ Default data inserted");
 
   // ============================================
-  // CREATE STORED PROCEDURES
+  // CREATE STORED PROCEDURES (WITH DROP IF EXISTS)
   // ============================================
   console.log("⚙️ Creating stored procedures...");
 
-  // Procedure to get user permissions
-  await queryInterface.execute(`
-    DELIMITER //
+  // First drop the procedures if they exist
+  await queryInterface.execute(`DROP PROCEDURE IF EXISTS sp_get_user_permissions`);
+  await queryInterface.execute(`DROP PROCEDURE IF EXISTS sp_log_activity`);
 
+  // Create stored procedures
+  await queryInterface.execute(`
     CREATE PROCEDURE sp_get_user_permissions(
       IN p_user_id CHAR(36)
     )
     BEGIN
       DECLARE v_user_type VARCHAR(50);
       
-      -- Get user type
+      -- Get user type (with error handling if users table doesn't exist yet)
       SELECT user_type INTO v_user_type 
       FROM users 
       WHERE id = p_user_id 
         AND deleted_at IS NULL;
       
       -- Return permissions for this user type
-      SELECT 
-        ac.section_id,
-        ac.permission_level,
-        ac.specific_access,
-        ac.conditions,
-        CASE ac.section_id
-          WHEN 1 THEN 'منصة التبرعات'
-          WHEN 2 THEN 'أعضاء مجلس الإدارة'
-          WHEN 3 THEN 'وقف العائلة'
-          WHEN 4 THEN 'أرشيف العائلة'
-          WHEN 5 THEN 'الإدارة التنفيذية'
-          WHEN 6 THEN 'المدير المالي'
-          WHEN 7 THEN 'اللجنة الاجتماعية'
-          WHEN 8 THEN 'اللجنة الثقافية'
-          WHEN 9 THEN 'لجنة إصلاح ذات البين'
-          WHEN 10 THEN 'المركز الإعلامي'
-        END AS section_name_arabic
-      FROM access_control_matrix ac
-      WHERE ac.user_type = v_user_type
-      ORDER BY ac.section_id;
-    END //
-    
-    DELIMITER ;
+      IF v_user_type IS NOT NULL THEN
+        SELECT 
+          ac.section_id,
+          ac.permission_level,
+          ac.specific_access,
+          ac.conditions,
+          CASE ac.section_id
+            WHEN 1 THEN 'منصة التبرعات'
+            WHEN 2 THEN 'أعضاء مجلس الإدارة'
+            WHEN 3 THEN 'وقف العائلة'
+            WHEN 4 THEN 'أرشيف العائلة'
+            WHEN 5 THEN 'الإدارة التنفيذية'
+            WHEN 6 THEN 'المدير المالي'
+            WHEN 7 THEN 'اللجنة الاجتماعية'
+            WHEN 8 THEN 'اللجنة الثقافية'
+            WHEN 9 THEN 'لجنة إصلاح ذات البين'
+            WHEN 10 THEN 'المركز الإعلامي'
+          END AS section_name_arabic
+        FROM access_control_matrix ac
+        WHERE ac.user_type = v_user_type
+        ORDER BY ac.section_id;
+      ELSE
+        -- Return empty result if user not found
+        SELECT NULL as section_id, NULL as permission_level, NULL as specific_access, 
+               NULL as conditions, NULL as section_name_arabic
+        WHERE FALSE;
+      END IF;
+    END
   `);
 
   // Procedure to log activity
   await queryInterface.execute(`
-    DELIMITER //
-    
     CREATE PROCEDURE sp_log_activity(
       IN p_user_id CHAR(36),
       IN p_section_id INT,
@@ -246,32 +239,41 @@ export const up = async (queryInterface) => {
       IN p_user_agent TEXT
     )
     BEGIN
-      INSERT INTO activity_logs (
-        user_id,
-        section_id,
-        action,
-        action_type,
-        entity_type,
-        entity_id,
-        description,
-        ip_address,
-        user_agent,
-        created_at
-      ) VALUES (
-        p_user_id,
-        p_section_id,
-        p_action,
-        p_action_type,
-        p_entity_type,
-        p_entity_id,
-        p_description,
-        p_ip_address,
-        p_user_agent,
-        NOW()
-      );
-    END //
-    
-    DELIMITER ;
+      DECLARE v_table_exists INT;
+      
+      -- Check if activity_logs table exists
+      SELECT COUNT(*) INTO v_table_exists
+      FROM information_schema.tables 
+      WHERE table_schema = DATABASE() 
+        AND table_name = 'activity_logs';
+      
+      -- Only insert if table exists
+      IF v_table_exists > 0 THEN
+        INSERT INTO activity_logs (
+          user_id,
+          section_id,
+          action,
+          action_type,
+          entity_type,
+          entity_id,
+          description,
+          ip_address,
+          user_agent,
+          created_at
+        ) VALUES (
+          p_user_id,
+          p_section_id,
+          p_action,
+          p_action_type,
+          p_entity_type,
+          p_entity_id,
+          p_description,
+          p_ip_address,
+          p_user_agent,
+          NOW()
+        );
+      END IF;
+    END
   `);
 
   console.log("✅ Stored procedures created");
@@ -281,64 +283,116 @@ export const up = async (queryInterface) => {
   // ============================================
   console.log("👁️ Creating views...");
 
-  // View for family dashboard
+  // Drop view if exists first
+  await queryInterface.execute(`DROP VIEW IF EXISTS vw_basic_dashboard`);
+  await queryInterface.execute(`DROP VIEW IF EXISTS vw_user_statistics`);
+
+  // Create view for user statistics (doesn't reference persons table)
   await queryInterface.execute(`
-    CREATE OR REPLACE VIEW vw_family_dashboard AS
+    CREATE VIEW vw_user_statistics AS
     SELECT 
-      'Total Members' AS metric_name,
+      'إجمالي الأعضاء' AS metric_name_arabic,
+      'Total Members' AS metric_name_english,
       COUNT(*) AS metric_value,
-      'persons' AS metric_icon
-    FROM persons
+      'users' AS metric_icon,
+      'info' AS metric_type
+    FROM users
+    WHERE deleted_at IS NULL
+      AND status IN ('ACTIVE', 'PENDING_VERIFICATION')
+    
+    UNION ALL
+    
+    SELECT 
+      'الأعضاء النشطين',
+      'Active Users',
+      COUNT(*),
+      'user-check',
+      'success'
+    FROM users
+    WHERE status = 'ACTIVE'
+      AND deleted_at IS NULL
+      
+    UNION ALL
+    
+    SELECT 
+      'المشرفين',
+      'Super Admins',
+      COUNT(*),
+      'shield',
+      'warning'
+    FROM users
+    WHERE user_type = 'SUPER_ADMIN'
+      AND status = 'ACTIVE'
+      AND deleted_at IS NULL
+      
+    UNION ALL
+    
+    SELECT 
+      'أعضاء مجلس الإدارة',
+      'Board Members',
+      COUNT(*),
+      'users',
+      'primary'
+    FROM users
+    WHERE user_type = 'BOARD_MEMBER'
+      AND status = 'ACTIVE'
+      AND deleted_at IS NULL
+      
+    UNION ALL
+    
+    SELECT 
+      'أعضاء العائلة',
+      'Family Members',
+      COUNT(*),
+      'user',
+      'secondary'
+    FROM users
+    WHERE user_type = 'FAMILY_MEMBER'
+      AND status = 'ACTIVE'
+      AND deleted_at IS NULL;
+  `);
+
+  // Create a basic dashboard view that only uses existing tables
+  await queryInterface.execute(`
+    CREATE VIEW vw_basic_dashboard AS
+    SELECT 
+      'إجمالي المستخدمين' AS metric_name_arabic,
+      'Total Users' AS metric_name_english,
+      COUNT(*) AS metric_value,
+      'users' AS metric_icon
+    FROM users
     WHERE deleted_at IS NULL
     
     UNION ALL
     
     SELECT 
-      'Active Donation Campaigns',
+      'المستخدمين النشطين',
+      'Active Users',
       COUNT(*),
-      'donation-campaigns'
-    FROM donation_campaigns
+      'user-check'
+    FROM users
     WHERE status = 'ACTIVE'
-      AND end_date >= CURDATE()
-    
-    UNION ALL
-
-    SELECT 
-      'Total Donations (SAR)',
-      COALESCE(SUM(amount), 0),
-      'donations'
-    FROM donations
-    WHERE status = 'COMPLETED'
-      AND YEAR(created_at) = YEAR(CURDATE())
-    
+      AND deleted_at IS NULL
+      
     UNION ALL
     
     SELECT 
-      'Pending Applications',
-      COUNT(*),
-      'applications'
-    FROM social_program_applications
-    WHERE status IN ('SUBMITTED', 'UNDER_REVIEW')
+      'إجمالي التبرعات',
+      'Total Donations',
+      COALESCE(SUM(total_donations), 0),
+      'donate'
+    FROM users
+    WHERE deleted_at IS NULL
     
     UNION ALL
     
     SELECT 
-      'Active Cases',
-      COUNT(*),
-      'cases'
-    FROM reconciliation_cases
-    WHERE status IN ('NEW', 'ASSIGNED', 'IN_PROGRESS', 'MEDIATION')
-    
-    UNION ALL
-    
-    SELECT 
-      'Recent News',
-      COUNT(*),
-      'news'
-    FROM media_content
-    WHERE content_type = 'NEWS'
-      AND status = 'PUBLISHED'
-      AND publish_date >= DATE_SUB(CURDATE(), INTERVAL 30 DAY);
+      'آخر تسجيل دخول',
+      'Last Login',
+      COALESCE(MAX(last_login_at), NOW()),
+      'clock'
+    FROM users
+    WHERE deleted_at IS NULL;
   `);
 
   console.log("✅ Views created");
@@ -346,89 +400,187 @@ export const up = async (queryInterface) => {
   // ============================================
   // CREATE TRIGGERS
   // ============================================
-  console.log("⚡ Creating triggers...");
+  console.log("🔔 Creating triggers...");
 
-  // Trigger to update donation statistics
+  // Drop triggers if they exist
+  await queryInterface.execute(`DROP TRIGGER IF EXISTS after_user_insert_notification`);
+  await queryInterface.execute(`DROP TRIGGER IF EXISTS after_user_update_status`);
+
+  // Create trigger for new user notifications
   await queryInterface.execute(`
-    CREATE TRIGGER after_donation_insert
-    AFTER INSERT ON donations
+    CREATE TRIGGER after_user_insert_notification
+    AFTER INSERT ON users
     FOR EACH ROW
     BEGIN
-      -- Update campaign current amount
-      UPDATE donation_campaigns 
-      SET current_amount = current_amount + NEW.amount,
-          updated_at = NOW()
-      WHERE campaign_id = NEW.campaign_id;
+      DECLARE v_notification_exists INT;
       
-      -- Update donor statistics in users table
-      IF NEW.donor_id IS NOT NULL THEN
-        UPDATE users 
-        SET total_donations = total_donations + NEW.amount,
-            donation_count = donation_count + 1,
-            last_donation_at = NOW(),
-            updated_at = NOW()
-        WHERE id = NEW.donor_id;
+      -- Check if notifications table exists
+      SELECT COUNT(*) INTO v_notification_exists
+      FROM information_schema.tables 
+      WHERE table_schema = DATABASE() 
+        AND table_name = 'notifications';
+      
+      -- Insert welcome notification if table exists
+      IF v_notification_exists > 0 AND NEW.status = 'ACTIVE' THEN
+        INSERT INTO notifications (
+          user_id,
+          title_arabic,
+          title_english,
+          message_arabic,
+          message_english,
+          notification_type,
+          priority,
+          is_read,
+          created_at,
+          updated_at
+        ) VALUES (
+          NEW.id,
+          'مرحباً بك في منصة العائلة',
+          'Welcome to Family Platform',
+          CONCAT('مرحباً ', COALESCE(NEW.full_name_arabic, 'عزيزي العضو'), '، نرحب بك في منصة عائلتنا الإلكترونية'),
+          CONCAT('Hello ', COALESCE(NEW.full_name_english, 'Dear Member'), ', welcome to our family electronic platform'),
+          'ANNOUNCEMENT',
+          'MEDIUM',
+          FALSE,
+          NOW(),
+          NOW()
+        );
       END IF;
+    END
+  `);
+
+  // Create trigger for user status change notifications
+  await queryInterface.execute(`
+    CREATE TRIGGER after_user_update_status
+    AFTER UPDATE ON users
+    FOR EACH ROW
+    BEGIN
+      DECLARE v_notification_exists INT;
       
-      -- Log the activity
-      CALL sp_log_activity(
-        NEW.donor_id,
-        1,
-        'DONATION_MADE',
-        'CREATE',
-        'donations',
-        NEW.donation_id,
-        CONCAT('Donation of ', NEW.amount, ' SAR made'),
-        NEW.ip_address,
-        NEW.user_agent
-      );
-    END;
+      -- Check if notifications table exists
+      SELECT COUNT(*) INTO v_notification_exists
+      FROM information_schema.tables 
+      WHERE table_schema = DATABASE() 
+        AND table_name = 'notifications';
+      
+      -- Insert notification for status change
+      IF v_notification_exists > 0 AND OLD.status != NEW.status THEN
+        INSERT INTO notifications (
+          user_id,
+          title_arabic,
+          title_english,
+          message_arabic,
+          message_english,
+          notification_type,
+          priority,
+          is_read,
+          created_at,
+          updated_at
+        ) VALUES (
+          NEW.id,
+          CASE NEW.status
+            WHEN 'ACTIVE' THEN 'تم تفعيل حسابك'
+            WHEN 'SUSPENDED' THEN 'تم تعليق حسابك مؤقتاً'
+            WHEN 'DEACTIVATED' THEN 'تم إلغاء تفعيل حسابك'
+            WHEN 'BANNED' THEN 'تم حظر حسابك'
+            ELSE 'تغيير في حالة حسابك'
+          END,
+          CASE NEW.status
+            WHEN 'ACTIVE' THEN 'Your account has been activated'
+            WHEN 'SUSPENDED' THEN 'Your account has been suspended'
+            WHEN 'DEACTIVATED' THEN 'Your account has been deactivated'
+            WHEN 'BANNED' THEN 'Your account has been banned'
+            ELSE 'Change in your account status'
+          END,
+          CASE NEW.status
+            WHEN 'ACTIVE' THEN CONCAT('تهانينا ', COALESCE(NEW.full_name_arabic, 'عزيزي العضو'), '! تم تفعيل حسابك بنجاح.')
+            WHEN 'SUSPENDED' THEN CONCAT('عزيزي ', COALESCE(NEW.full_name_arabic, 'العضو'), '، تم تعليق حسابك مؤقتاً لأسباب أمنية.')
+            ELSE CONCAT('عزيزي ', COALESCE(NEW.full_name_arabic, 'العضو'), '، تم تغيير حالة حسابك إلى ', NEW.status)
+          END,
+          CASE NEW.status
+            WHEN 'ACTIVE' THEN CONCAT('Congratulations ', COALESCE(NEW.full_name_english, 'Dear Member'), '! Your account has been successfully activated.')
+            WHEN 'SUSPENDED' THEN CONCAT('Dear ', COALESCE(NEW.full_name_english, 'Member'), ', your account has been temporarily suspended for security reasons.')
+            ELSE CONCAT('Dear ', COALESCE(NEW.full_name_english, 'Member'), ', your account status has been changed to ', NEW.status)
+          END,
+          'SYSTEM',
+          CASE NEW.status
+            WHEN 'SUSPENDED' THEN 'HIGH'
+            WHEN 'BANNED' THEN 'URGENT'
+            ELSE 'MEDIUM'
+          END,
+          FALSE,
+          NOW(),
+          NOW()
+        );
+      END IF;
+    END
   `);
 
   console.log("✅ Triggers created");
 
-  console.log(
-    "🎉🎉🎉 COMPREHENSIVE FAMILY MANAGEMENT SYSTEM CREATED SUCCESSFULLY! 🎉🎉🎉",
-  );
-  console.log("📊 Total tables created: ~40 tables");
-  console.log("🔐 System includes: 10 sections with proper access control");
-  console.log(
-    "📈 Features: Donations, Waqf, Archive, Committees, Media Center, and more",
-  );
-  console.log("🚀 Ready to use!");
+  console.log("🎉 System-wide tables created successfully!");
+  console.log("📊 Tables created: access_control_matrix, activity_logs, notifications");
+  console.log("⚙️ Procedures created: sp_get_user_permissions, sp_log_activity");
+  console.log("👁️ Views created: vw_basic_dashboard, vw_user_statistics");
+  console.log("🔔 Triggers created: after_user_insert_notification, after_user_update_status");
+  console.log("🚀 Ready for section-specific migrations!");
 };
 
 export const down = async (queryInterface) => {
   console.log("🔄 Dropping comprehensive family management system...");
 
   // Drop triggers first
-  await queryInterface.execute("DROP TRIGGER IF EXISTS after_donation_insert");
+  const triggers = [
+    "after_user_insert_notification",
+    "after_user_update_status",
+    "after_donation_insert"  // This might exist from other migrations
+  ];
+
+  for (const trigger of triggers) {
+    try {
+      await queryInterface.execute(`DROP TRIGGER IF EXISTS ${trigger}`);
+      console.log(`✅ Dropped trigger: ${trigger}`);
+    } catch (error) {
+      console.log(`⚠️ Could not drop trigger ${trigger}: ${error.message}`);
+    }
+  }
 
   // Drop procedures
-  await queryInterface.execute(
-    "DROP PROCEDURE IF EXISTS sp_get_user_permissions",
-  );
-  await queryInterface.execute("DROP PROCEDURE IF EXISTS sp_log_activity");
+  const procedures = [
+    "sp_get_user_permissions",
+    "sp_log_activity"
+  ];
+
+  for (const procedure of procedures) {
+    try {
+      await queryInterface.execute(`DROP PROCEDURE IF EXISTS ${procedure}`);
+      console.log(`✅ Dropped procedure: ${procedure}`);
+    } catch (error) {
+      console.log(`⚠️ Could not drop procedure ${procedure}: ${error.message}`);
+    }
+  }
 
   // Drop views
-  await queryInterface.execute("DROP VIEW IF EXISTS vw_family_dashboard");
+  const views = [
+    "vw_basic_dashboard",
+    "vw_user_statistics",
+    "vw_family_dashboard"  // This might exist from other migrations
+  ];
 
-  // Drop tables in reverse order (child tables first)
+  for (const view of views) {
+    try {
+      await queryInterface.execute(`DROP VIEW IF EXISTS ${view}`);
+      console.log(`✅ Dropped view: ${view}`);
+    } catch (error) {
+      console.log(`⚠️ Could not drop view ${view}: ${error.message}`);
+    }
+  }
+
+  // Drop tables in reverse order of creation
   const tables = [
-    // System-wide tables
     "notifications",
     "activity_logs",
-    "access_control_matrix",
-
-    // Section 9
-    "case_sessions",
-    "reconciliation_cases",
-    "reconciliation_committee",
-
-    // Section 8
-    "quran_competition_participants",
-    "cultural_initiatives",
-    "cultural_committee",
+    "access_control_matrix"
   ];
 
   for (const table of tables) {
@@ -440,5 +592,5 @@ export const down = async (queryInterface) => {
     }
   }
 
-  console.log("✅ All tables dropped successfully");
+  console.log("✅ All components dropped successfully");
 };

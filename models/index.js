@@ -1,7 +1,7 @@
 import db from "../database/database.js";
 
 // Import all models
-import Person from "./Person.js";
+// import Person from "./Person.js";
 import User from "./User.js";
 import PersonalAccessToken from "./PersonalAccessToken.js";
 import Session from "./Session.js";
@@ -45,7 +45,7 @@ import CaseDocument from "./reconciliation/CaseDocument.js";
 // Export all models
 export {
   db,
-  Person,
+  // Person,
   User,
   PersonalAccessToken,
   Session,
@@ -80,7 +80,7 @@ export {
 // Export default with all models
 export default {
   db,
-  Person,
+  // Person,
   User,
   PersonalAccessToken,
   Session,

@@ -1,10 +1,11 @@
 /**
- * Migration: create_media_table
+ * Migration: create_media_table - FIXED VERSION 2
  */
 
 export const up = async (queryInterface) => {
   console.log("📦 Creating Section 10: Media Center...");
 
+  // Media Center
   await queryInterface.execute(`
     CREATE TABLE IF NOT EXISTS media_center (
       center_id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
@@ -26,13 +27,23 @@ export const up = async (queryInterface) => {
       
       CONSTRAINT fk_media_director 
         FOREIGN KEY (director_id) 
-        REFERENCES persons(person_id) 
+        REFERENCES persons(id) 
         ON DELETE SET NULL 
         ON UPDATE CASCADE,
       
-      INDEX idx_formation_date (formation_date)
+      CONSTRAINT fk_media_created_by 
+        FOREIGN KEY (created_by) 
+        REFERENCES users(id) 
+        ON DELETE SET NULL 
+        ON UPDATE CASCADE,
+      
+      INDEX idx_formation_date (formation_date),
+      INDEX idx_director_id (director_id),
+      INDEX idx_created_by (created_by)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
   `);
+
+  console.log("✅ media_center table created");
 
   // Media Content
   await queryInterface.execute(`
@@ -69,7 +80,13 @@ export const up = async (queryInterface) => {
       
       CONSTRAINT fk_content_author 
         FOREIGN KEY (author_id) 
-        REFERENCES persons(person_id) 
+        REFERENCES persons(id) 
+        ON DELETE SET NULL 
+        ON UPDATE CASCADE,
+      
+      CONSTRAINT fk_content_created_by 
+        FOREIGN KEY (created_by) 
+        REFERENCES users(id) 
         ON DELETE SET NULL 
         ON UPDATE CASCADE,
       
@@ -78,9 +95,12 @@ export const up = async (queryInterface) => {
       INDEX idx_publish_date (publish_date),
       INDEX idx_category (category),
       INDEX idx_author (author_id),
-      FULLTEXT idx_content_search (title_arabic, title_english, content_arabic, content_english, tags)
+      INDEX idx_created_by (created_by),
+      FULLTEXT idx_content_search (title_arabic, title_english, content_arabic, content_english)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
   `);
+
+  console.log("✅ media_content table created");
 
   // Media Campaigns
   await queryInterface.execute(`
@@ -105,18 +125,31 @@ export const up = async (queryInterface) => {
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
       
+      CONSTRAINT fk_campaign_created_by 
+        FOREIGN KEY (created_by) 
+        REFERENCES users(id) 
+        ON DELETE SET NULL 
+        ON UPDATE CASCADE,
+      
       INDEX idx_campaign_type (campaign_type),
       INDEX idx_status (status),
-      INDEX idx_dates (start_date, end_date)
+      INDEX idx_dates (start_date, end_date),
+      INDEX idx_created_by (created_by)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
   `);
 
-  console.log("✅ Section 10 created");
+  console.log("✅ media_campaigns table created");
+
+  console.log("✅ Section 10 Media Center created successfully!");
 };
 
 export const down = async (queryInterface) => {
-  // Write your migration DOWN logic here
-  // This should reverse what up() does
-  // Example:
-  // await queryInterface.execute('DROP TABLE IF EXISTS users');
+  console.log("🔄 Dropping Section 10: Media Center tables...");
+
+  // Drop tables in reverse order (child tables first)
+  await queryInterface.execute("DROP TABLE IF EXISTS media_campaigns");
+  await queryInterface.execute("DROP TABLE IF EXISTS media_content");
+  await queryInterface.execute("DROP TABLE IF EXISTS media_center");
+
+  console.log("✅ Section 10 tables dropped successfully");
 };

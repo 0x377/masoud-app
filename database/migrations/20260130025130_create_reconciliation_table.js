@@ -1,10 +1,11 @@
 /**
- * Migration: create_reconciliation_table
+ * Migration: create_reconciliation_table - FIXED VERSION
  */
 
 export const up = async (queryInterface) => {
   console.log("📦 Creating Section 9: Reconciliation Committee...");
 
+  // Reconciliation Committee
   await queryInterface.execute(`
     CREATE TABLE IF NOT EXISTS reconciliation_committee (
       committee_id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
@@ -24,13 +25,23 @@ export const up = async (queryInterface) => {
 
       CONSTRAINT fk_reconciliation_chairman 
         FOREIGN KEY (chairman_id) 
-        REFERENCES persons(person_id) 
+        REFERENCES persons(id) 
         ON DELETE SET NULL 
         ON UPDATE CASCADE,
       
-      INDEX idx_formation_date (formation_date)
+      CONSTRAINT fk_reconciliation_created_by 
+        FOREIGN KEY (created_by) 
+        REFERENCES users(id) 
+        ON DELETE SET NULL 
+        ON UPDATE CASCADE,
+      
+      INDEX idx_formation_date (formation_date),
+      INDEX idx_chairman_id (chairman_id),
+      INDEX idx_created_by (created_by)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
   `);
+
+  console.log("✅ reconciliation_committee table created");
 
   // Reconciliation Cases
   await queryInterface.execute(`
@@ -62,19 +73,25 @@ export const up = async (queryInterface) => {
       
       CONSTRAINT fk_case_plaintiff 
         FOREIGN KEY (plaintiff_id) 
-        REFERENCES persons(person_id) 
+        REFERENCES persons(id) 
         ON DELETE SET NULL 
         ON UPDATE CASCADE,
       
       CONSTRAINT fk_case_defendant 
         FOREIGN KEY (defendant_id) 
-        REFERENCES persons(person_id) 
+        REFERENCES persons(id) 
         ON DELETE SET NULL 
         ON UPDATE CASCADE,
       
       CONSTRAINT fk_case_mediator 
         FOREIGN KEY (mediator_id) 
-        REFERENCES persons(person_id) 
+        REFERENCES persons(id) 
+        ON DELETE SET NULL 
+        ON UPDATE CASCADE,
+      
+      CONSTRAINT fk_case_created_by 
+        FOREIGN KEY (created_by) 
+        REFERENCES users(id) 
         ON DELETE SET NULL 
         ON UPDATE CASCADE,
       
@@ -84,9 +101,13 @@ export const up = async (queryInterface) => {
       INDEX idx_priority (priority),
       INDEX idx_filing_date (filing_date),
       INDEX idx_plaintiff (plaintiff_id),
-      INDEX idx_defendant (defendant_id)
+      INDEX idx_defendant (defendant_id),
+      INDEX idx_mediator (mediator_id),
+      INDEX idx_created_by (created_by)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
   `);
+
+  console.log("✅ reconciliation_cases table created");
 
   // Case Sessions
   await queryInterface.execute(`
@@ -114,18 +135,31 @@ export const up = async (queryInterface) => {
         ON DELETE CASCADE 
         ON UPDATE CASCADE,
       
+      CONSTRAINT fk_session_created_by 
+        FOREIGN KEY (created_by) 
+        REFERENCES users(id) 
+        ON DELETE SET NULL 
+        ON UPDATE CASCADE,
+      
       INDEX idx_case_id (case_id),
       INDEX idx_session_date (session_date),
-      INDEX idx_session_type (session_type)
+      INDEX idx_session_type (session_type),
+      INDEX idx_created_by (created_by)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
   `);
 
-  console.log("✅ Section 9 created");
+  console.log("✅ case_sessions table created");
+
+  console.log("✅ Section 9 Reconciliation Committee created successfully!");
 };
 
 export const down = async (queryInterface) => {
-  // Write your migration DOWN logic here
-  // This should reverse what up() does
-  // Example:
-  // await queryInterface.execute('DROP TABLE IF EXISTS users');
+  console.log("🔄 Dropping Section 9: Reconciliation Committee tables...");
+
+  // Drop tables in reverse order (child tables first)
+  await queryInterface.execute("DROP TABLE IF EXISTS case_sessions");
+  await queryInterface.execute("DROP TABLE IF EXISTS reconciliation_cases");
+  await queryInterface.execute("DROP TABLE IF EXISTS reconciliation_committee");
+
+  console.log("✅ Section 9 tables dropped successfully");
 };

@@ -5,10 +5,13 @@
 export const up = async (queryInterface) => {
   console.log("🔄 Creating comprehensive users table...");
 
-  // Create persons table (for detailed personal information)
+  // Create comprehensive users table (combining personal and user information)
   await queryInterface.execute(`
-    CREATE TABLE IF NOT EXISTS persons (
-      id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
+    CREATE TABLE IF NOT EXISTS users (
+      -- Primary identification
+      id CHAR(36) PRIMARY KEY DEFAULT (UUID()) UNIQUE,
+
+      -- Personal Information
       national_id VARCHAR(14) UNIQUE COMMENT 'الهوية الوطنية - 14 رقم',
       full_name_arabic VARCHAR(255),
       full_name_english VARCHAR(255),
@@ -19,39 +22,15 @@ export const up = async (queryInterface) => {
       is_alive BOOLEAN DEFAULT TRUE,
       marital_status ENUM('single', 'married', 'divorced', 'widowed') DEFAULT 'single',
       blood_type VARCHAR(5) COMMENT 'مثل: O+, A-, AB+',
-      email VARCHAR(255),
-      phone_number VARCHAR(20),
       current_address TEXT,
       photo_path VARCHAR(500),
       family_info JSON COMMENT 'معلومات الأب والأم والأبناء',
       education_info JSON COMMENT 'معلومات التعليم',
       work_info JSON COMMENT 'معلومات العمل',
       additional_info JSON,
-      created_by CHAR(36),
       verified_by CHAR(36),
       verified_at TIMESTAMP NULL,
-      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
       deleted_at TIMESTAMP NULL,
-
-      -- Indexes
-      INDEX idx_birth_date (birth_date),
-      INDEX idx_is_alive (is_alive),
-      INDEX idx_gender_marital (gender, marital_status),
-      INDEX idx_national_id (national_id),
-      INDEX idx_email (email),
-      INDEX idx_phone_number (phone_number)
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Detailed personal information';
-  `);
-
-  console.log("✅ Persons table created");
-
-  // Create comprehensive users table
-  await queryInterface.execute(`
-    CREATE TABLE IF NOT EXISTS users (
-      -- Primary identification
-      id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
-      person_id CHAR(36) UNIQUE,
 
       -- Authentication & basic info
       username VARCHAR(50) UNIQUE,
@@ -62,7 +41,7 @@ export const up = async (queryInterface) => {
       password VARCHAR(255) NOT NULL,
       password_changed_at TIMESTAMP NULL,
       remember_token VARCHAR(100),
-
+      
       -- User roles and permissions
       user_type ENUM(
         'FAMILY_MEMBER',
@@ -84,6 +63,7 @@ export const up = async (queryInterface) => {
       status ENUM(
         'PENDING_VERIFICATION',
         'ACTIVE',
+        'USER_INFO',
         'SUSPENDED',
         'DEACTIVATED',
         'BANNED'
@@ -108,7 +88,7 @@ export const up = async (queryInterface) => {
       last_activity_at TIMESTAMP NULL,
       current_session_id VARCHAR(255),
       login_count INT DEFAULT 0,
-
+      
       -- Preferences
       preferences JSON COMMENT 'User preferences (theme, language, notifications)',
       notification_settings JSON COMMENT 'Notification preferences',
@@ -121,28 +101,51 @@ export const up = async (queryInterface) => {
       -- Metadata
       metadata JSON,
 
+      -- Family relationships (self-referencing foreign keys)
+      father_id CHAR(36) COMMENT 'Reference to father',
+      mother_id CHAR(36) COMMENT 'Reference to mother',
+      spouse_id CHAR(36) COMMENT 'Reference to spouse',
+
       -- Audit timestamps
+      created_by CHAR(36),
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-      deleted_at TIMESTAMP NULL,
-
-      -- Foreign key constraint
-      CONSTRAINT fk_users_person FOREIGN KEY (person_id) 
-        REFERENCES persons(id) 
-        ON DELETE SET NULL 
-        ON UPDATE CASCADE,
 
       -- Indexes for performance
+      INDEX idx_birth_date (birth_date),
+      INDEX idx_is_alive (is_alive),
+      INDEX idx_gender_marital (gender, marital_status),
+      INDEX idx_national_id (national_id),
+      INDEX idx_email (email),
+      INDEX idx_phone_number (phone_number),
       INDEX idx_user_type_status (user_type, status),
       INDEX idx_status (status),
       INDEX idx_email_verified (email_verified_at),
       INDEX idx_last_login (last_login_at),
       INDEX idx_created_at (created_at),
-      INDEX idx_phone_number (phone_number),
       INDEX idx_total_donations (total_donations),
-      INDEX idx_person_id (person_id)
-
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='User authentication and account management';
+      INDEX idx_father (father_id),
+      INDEX idx_mother (mother_id),
+      INDEX idx_spouse (spouse_id),
+      
+      -- Self-referencing foreign keys for family relationships
+      CONSTRAINT fk_users_father FOREIGN KEY (father_id) 
+        REFERENCES users(id) 
+        ON DELETE SET NULL 
+        ON UPDATE CASCADE,
+      
+      CONSTRAINT fk_users_mother FOREIGN KEY (mother_id) 
+        REFERENCES users(id) 
+        ON DELETE SET NULL 
+        ON UPDATE CASCADE,
+      
+      CONSTRAINT fk_users_spouse FOREIGN KEY (spouse_id) 
+        REFERENCES users(id) 
+        ON DELETE SET NULL 
+        ON UPDATE CASCADE
+      
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci 
+    COMMENT='Combined user and personal information table';
   `);
 
   console.log("✅ Users table created");
@@ -343,48 +346,7 @@ export const up = async (queryInterface) => {
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
   `);
 
-  // console.log("✅ Login histories table created");
-
-  // // Create security logs table
-  // await queryInterface.execute(`
-  //   CREATE TABLE IF NOT EXISTS security_logs (
-  //     id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
-  //     user_id CHAR(36),
-  //     severity ENUM('LOW', 'MEDIUM', 'HIGH', 'CRITICAL') NOT NULL,
-  //     action VARCHAR(255) NOT NULL,
-  //     description TEXT NOT NULL,
-  //     ip_address VARCHAR(45),
-  //     user_agent TEXT,
-  //     old_values JSON,
-  //     new_values JSON,
-  //     metadata JSON,
-  //     affected_user_id CHAR(36) COMMENT 'User affected by this action',
-  //     affected_table VARCHAR(255),
-  //     affected_record_id CHAR(36),
-  //     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  //     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-      
-  //     -- Indexes
-  //     INDEX idx_user_severity_created (user_id, severity, created_at),
-  //     INDEX idx_severity (severity),
-  //     INDEX idx_action (action),
-  //     INDEX idx_affected_user (affected_user_id),
-  //     INDEX idx_created_at (created_at),
-      
-  //     -- Foreign key constraints
-  //     CONSTRAINT fk_security_logs_user FOREIGN KEY (user_id) 
-  //       REFERENCES users(id) 
-  //       ON DELETE SET NULL 
-  //       ON UPDATE CASCADE,
-      
-  //     CONSTRAINT fk_security_logs_affected_user FOREIGN KEY (affected_user_id) 
-  //       REFERENCES users(id) 
-  //       ON DELETE SET NULL 
-  //       ON UPDATE CASCADE
-  //   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-  // `);
-
-  // console.log("✅ Security logs table created");
+  console.log("✅ Login histories table created");
 
   // Create password history table
   await queryInterface.execute(`
@@ -451,61 +413,108 @@ export const up = async (queryInterface) => {
 
   console.log("✅ User permissions table created");
 
-  // Insert default admin user
+  // Create family relationships table for complex family structures
   await queryInterface.execute(`
-    INSERT INTO persons (
-      id, national_id, full_name_arabic, full_name_english, 
-      gender, email, phone_number, created_at, updated_at
+    CREATE TABLE IF NOT EXISTS family_relationships (
+      id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
+      person_id CHAR(36) NOT NULL COMMENT 'The main person',
+      related_person_id CHAR(36) NOT NULL COMMENT 'The related person',
+      relationship_type ENUM(
+        'FATHER',
+        'MOTHER',
+        'SON',
+        'DAUGHTER',
+        'SPOUSE',
+        'BROTHER',
+        'SISTER',
+        'GRANDFATHER',
+        'GRANDMOTHER',
+        'GRANDSON',
+        'GRANDDAUGHTER',
+        'UNCLE',
+        'AUNT',
+        'COUSIN',
+        'NEPHEW',
+        'NIECE'
+      ) NOT NULL,
+      is_primary BOOLEAN DEFAULT TRUE COMMENT 'Primary relationship (e.g., biological father)',
+      notes TEXT,
+      relationship_since DATE COMMENT 'When this relationship started',
+      relationship_until DATE COMMENT 'When this relationship ended',
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
+      -- Unique constraint
+      UNIQUE KEY uk_person_relationship (person_id, related_person_id, relationship_type),
+
+      -- Indexes
+      INDEX idx_person_id (person_id),
+      INDEX idx_related_person (related_person_id),
+      INDEX idx_relationship_type (relationship_type),
+      INDEX idx_person_relationship (person_id, relationship_type),
+
+      -- Foreign key constraints
+      CONSTRAINT fk_family_relationships_person FOREIGN KEY (person_id) 
+        REFERENCES users(id) 
+        ON DELETE CASCADE 
+        ON UPDATE CASCADE,
+
+      CONSTRAINT fk_family_relationships_related FOREIGN KEY (related_person_id) 
+        REFERENCES users(id) 
+        ON DELETE CASCADE 
+        ON UPDATE CASCADE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    COMMENT='Complex family relationships beyond immediate family';
+  `);
+
+  console.log("✅ Family relationships table created");
+
+  // Insert default admin user (simplified since persons table is removed)
+  await queryInterface.execute(`
+    INSERT INTO users (
+      id,
+      national_id,
+      full_name_arabic,
+      full_name_english,
+      gender,
+      birth_date,
+      email,
+      email_verified_at,
+      phone_number,
+      phone_verified_at,
+      username,
+      password,
+      password_changed_at,
+      user_type,
+      status,
+      mfa_enabled,
+      preferences,
+      created_at,
+      updated_at
     ) VALUES (
       UUID(),
       '00000000000000',
       'مدير النظام',
       'System Administrator',
       'M',
+      '1990-01-01',
       'admin@example.com',
+      NOW(),
       '+966500000000',
+      NOW(),
+      'admin',
+      '$2y$12$XHxYzABC123DEF456GHI789JKL012MNOP345QRS678TUV901WXYZA', -- admin123
+      NOW(),
+      'SUPER_ADMIN',
+      'ACTIVE',
+      FALSE,
+      '{"theme": "light", "language": "ar", "notifications": true}',
       NOW(),
       NOW()
     );
   `);
 
-  const [personResult] = await queryInterface.execute(`
-    SELECT id FROM persons WHERE email = 'admin@example.com';
-  `);
-
-  if (personResult.length > 0) {
-    const personId = personResult[0].id;
-
-    await queryInterface.execute(
-      `
-      INSERT INTO users (
-        id, person_id, username, email, email_verified_at, 
-        phone_number, phone_verified_at, password, password_changed_at,
-        user_type, status, mfa_enabled, preferences, 
-        created_at, updated_at
-      ) VALUES (
-        UUID(),
-        ?,
-        'admin',
-        'admin@example.com',
-        NOW(),
-        '+966500000000',
-        NOW(),
-        '$2y$12$XHxYzABC123DEF456GHI789JKL012MNOP345QRS678TUV901WXYZA', -- admin123
-        NOW(),
-        'SUPER_ADMIN',
-        'ACTIVE',
-        FALSE,
-        '{"theme": "light", "language": "ar", "notifications": true}',
-        NOW(),
-        NOW()
-      );
-    `,
-      [personId],
-    );
-
-    console.log("✅ Default admin user created");
-  }
+  console.log("✅ Default admin user created");
 
   console.log("🎉 All tables created successfully!");
 };
@@ -514,16 +523,15 @@ export const down = async (queryInterface) => {
   console.log("🔄 Dropping all tables...");
 
   // Drop tables in reverse order (due to foreign key constraints)
+  await queryInterface.execute("DROP TABLE IF EXISTS family_relationships");
   await queryInterface.execute("DROP TABLE IF EXISTS user_permissions");
   await queryInterface.execute("DROP TABLE IF EXISTS password_history");
-  // await queryInterface.execute("DROP TABLE IF EXISTS security_logs");
   await queryInterface.execute("DROP TABLE IF EXISTS login_histories");
   await queryInterface.execute("DROP TABLE IF EXISTS verification_codes");
   await queryInterface.execute("DROP TABLE IF EXISTS sessions");
   await queryInterface.execute("DROP TABLE IF EXISTS personal_access_tokens");
   await queryInterface.execute("DROP TABLE IF EXISTS password_reset_tokens");
   await queryInterface.execute("DROP TABLE IF EXISTS users");
-  await queryInterface.execute("DROP TABLE IF EXISTS persons");
 
   console.log("✅ All tables dropped successfully");
 };

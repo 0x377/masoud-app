@@ -1,6 +1,8 @@
-export const title_list = {
+export const TITLE_LIST = {
+  veryifyCode: "تاكيد البريد الالكتروني",
   veryifyEmail: "تاكيد البريد الالكتروني",
   resetPassword: "تعيين كلمة مرور جديدة",
+  successResetPassword: "تم تعيين كلمة مرور جديدة",
 };
 
 export const BASE_TEMPLATE_MAIL = `
@@ -13,22 +15,33 @@ export const BASE_TEMPLATE_MAIL = `
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800;900&display=swap"
       rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
     />
     <style>
       :root {
         --primary-color: #1a365d;
+        --primary-light: #2d4a8a;
         --secondary-color: #2d3748;
         --accent-color: #38b2ac;
+        --accent-dark: #319795;
         --light-color: #f7fafc;
+        --light-gray: #e2e8f0;
         --danger-color: #e53e3e;
         --success-color: #38a169;
+        --text-color: #2d3748;
+        --text-light: #718096;
         --border-radius: 12px;
+        --border-radius-sm: 8px;
         --box-shadow:
           0 10px 15px -3px rgba(0, 0, 0, 0.1),
           0 4px 6px -2px rgba(0, 0, 0, 0.05);
-        --transition: all 0.3s ease;
+        --box-shadow-light: 0 4px 6px rgba(0, 0, 0, 0.05);
+        --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
       }
 
       * {
@@ -38,43 +51,53 @@ export const BASE_TEMPLATE_MAIL = `
         font-family: "Cairo", sans-serif;
       }
 
+      html {
+        scroll-behavior: smooth;
+      }
+
       body {
-        width: 100vw;
+        width: 100%;
         min-height: 100vh;
         background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-        color: var(--secondary-color);
+        color: var(--text-color);
         direction: rtl;
         overflow-x: hidden;
-        padding: 20px;
+        padding: 16px;
         display: flex;
         justify-content: center;
         align-items: center;
+        line-height: 1.6;
       }
 
       .root {
         width: 100%;
         max-width: 800px;
-        min-height: 90vh;
+        min-height: auto;
         display: flex;
         flex-direction: column;
         background-color: white;
         border-radius: var(--border-radius);
         box-shadow: var(--box-shadow);
         overflow: hidden;
+        animation: fadeIn 0.8s ease-out;
       }
 
-      /* Header Styles */
+      /* Header */
       header {
         background: linear-gradient(
           90deg,
           var(--primary-color),
-          var(--secondary-color)
+          var(--primary-light)
         );
         color: white;
-        padding: 30px 40px;
+        padding: clamp(20px, 5vw, 30px) clamp(16px, 4vw, 40px);
         text-align: center;
         position: relative;
         overflow: hidden;
+        min-height: 160px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
       }
 
       header::before {
@@ -84,52 +107,60 @@ export const BASE_TEMPLATE_MAIL = `
         right: 0;
         width: 100%;
         height: 100%;
-        background-image: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm-43-7c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm63 31c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM34 90c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm56-76c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM12 86c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm28-65c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm23-11c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-6 60c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm29 22c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zM32 63c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm57-13c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-9-21c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM60 91c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM35 41c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM12 60c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2z' fill='%231a365d' fill-opacity='0.1' fill-rule='evenodd'/%3E%3C/svg%3E");
-        opacity: 0.2;
+        background-image: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm-43-7c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm63 31c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM34 90c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm56-76c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM12 86c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm28-65c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm23-11c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-6 60c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm29 22c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zM32 63c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm57-13c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-9-21c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM60 91c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM35 41c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM12 60c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2z' fill='%23ffffff' fill-opacity='0.08' fill-rule='evenodd'/%3E%3C/svg%3E");
+        opacity: 0.3;
       }
 
       .logo-container {
         display: flex;
         justify-content: center;
         align-items: center;
-        margin-bottom: 20px;
+        margin-bottom: clamp(12px, 3vw, 20px);
+        flex-wrap: wrap;
+        gap: 12px;
       }
 
       .logo {
-        width: 80px;
-        height: 80px;
-        background-color: white;
+        width: clamp(60px, 12vw, 80px);
+        height: clamp(60px, 12vw, 80px);
+        background-color: rgba(255, 255, 255, 0.95);
         border-radius: 50%;
         display: flex;
         justify-content: center;
         align-items: center;
         color: var(--primary-color);
-        font-size: 24px;
-        font-weight: 700;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        margin-left: 15px;
+        font-size: clamp(22px, 5vw, 28px);
+        font-weight: 900;
+        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+        flex-shrink: 0;
+      }
+
+      .header-text {
+        flex: 1;
+        min-width: 200px;
       }
 
       h1 {
-        font-size: 2.5rem;
-        font-weight: 700;
-        margin-bottom: 10px;
+        font-size: clamp(1.5rem, 4.5vw, 2.5rem);
+        font-weight: 900;
+        margin-bottom: clamp(6px, 1.5vw, 10px);
         text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.2);
+        line-height: 1.3;
       }
 
       .subtitle {
-        font-size: 1.2rem;
-        font-weight: 300;
-        opacity: 0.9;
+        font-size: clamp(0.95rem, 2.5vw, 1.2rem);
+        font-weight: 400;
+        opacity: 0.95;
         max-width: 600px;
         margin: 0 auto;
-        line-height: 1.6;
+        line-height: 1.5;
       }
 
-      /* Main Content Styles */
+      /* Main Content */
       main {
         flex: 1;
-        padding: 40px;
+        padding: clamp(24px, 5vw, 40px) clamp(20px, 4vw, 40px);
         display: flex;
         flex-direction: column;
         justify-content: center;
@@ -139,230 +170,238 @@ export const BASE_TEMPLATE_MAIL = `
         text-align: center;
         max-width: 600px;
         margin: 0 auto;
+        width: 100%;
       }
 
+      /* Icon Container */
       .icon-container {
-        width: 100px;
-        height: 100px;
-        background: linear-gradient(135deg, var(--accent-color), #319795);
+        width: clamp(80px, 20vw, 100px);
+        height: clamp(80px, 20vw, 100px);
+        background: linear-gradient(
+          135deg,
+          var(--accent-color),
+          var(--accent-dark)
+        );
         border-radius: 50%;
         display: flex;
         justify-content: center;
         align-items: center;
-        margin: 0 auto 30px;
+        margin: 0 auto clamp(20px, 5vw, 30px);
         box-shadow: var(--box-shadow);
+        animation: pulse 2s infinite ease-in-out;
+      }
+
+      .icon-container.success {
+        background: linear-gradient(135deg, var(--success-color), #2f855a);
+      }
+
+      .icon-container.warning {
+        background: linear-gradient(135deg, #ed8936, #dd6b20);
+      }
+
+      .icon-container.danger {
+        background: linear-gradient(135deg, var(--danger-color), #c53030);
       }
 
       .icon-container i {
-        font-size: 48px;
+        font-size: clamp(36px, 8vw, 48px);
         color: white;
       }
 
       h2 {
-        font-size: 2rem;
+        font-size: clamp(1.5rem, 4vw, 2rem);
         color: var(--primary-color);
-        margin-bottom: 15px;
-        font-weight: 600;
+        margin-bottom: clamp(12px, 3vw, 15px);
+        font-weight: 800;
+        line-height: 1.3;
       }
 
       .description {
-        font-size: 1.1rem;
+        font-size: clamp(1rem, 2.5vw, 1.1rem);
         line-height: 1.7;
-        margin-bottom: 30px;
-        color: var(--secondary-color);
+        margin-bottom: clamp(20px, 5vw, 30px);
+        color: var(--text-color);
+        text-align: justify;
+        text-align-last: center;
       }
 
       .highlight {
-        background-color: #e6fffa;
-        padding: 15px;
+        background-color: #f0f9f8;
+        padding: clamp(12px, 3vw, 15px);
         border-right: 4px solid var(--accent-color);
-        border-radius: 8px;
-        margin: 25px 0;
+        border-radius: var(--border-radius-sm);
+        margin: clamp(20px, 5vw, 25px) 0;
         text-align: right;
-        font-size: 1.1rem;
+        font-size: clamp(0.95rem, 2.5vw, 1.05rem);
+        box-shadow: var(--box-shadow-light);
       }
 
-      .email-display {
-        background-color: #f7fafc;
-        border: 1px solid #e2e8f0;
-        border-radius: 8px;
-        padding: 15px;
-        margin: 20px 0;
-        font-size: 1.2rem;
-        font-weight: 600;
-        color: var(--primary-color);
-        display: inline-block;
-        text-align: center;
+      .highlight.warning {
+        background-color: #fffaf0;
+        border-right-color: #ed8936;
       }
 
-      /* Button Styles */
+      .highlight.success {
+        background-color: #f0fff4;
+        border-right-color: var(--success-color);
+      }
+
+      .highlight.danger {
+        background-color: #fff5f5;
+        border-right-color: var(--danger-color);
+      }
+
+      .highlight strong {
+        color: var(--accent-dark);
+      }
+
+      /* Buttons */
       .btn-container {
-        margin: 30px 0;
+        margin: clamp(20px, 6vw, 30px) 0;
+        display: flex;
+        justify-content: center;
+        flex-wrap: wrap;
+        gap: 15px;
       }
 
       .btn {
-        display: inline-block;
-        padding: 16px 40px;
-        font-size: 1.2rem;
-        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: clamp(14px, 3vw, 16px) clamp(30px, 6vw, 40px);
+        font-size: clamp(1rem, 2.5vw, 1.2rem);
+        font-weight: 700;
         text-decoration: none;
         border-radius: var(--border-radius);
         transition: var(--transition);
         cursor: pointer;
         border: none;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        box-shadow: var(--box-shadow-light);
+        text-align: center;
+        min-height: 54px;
+        min-width: 180px;
       }
 
       .btn-primary {
-        background: linear-gradient(90deg, var(--accent-color), #319795);
+        background: linear-gradient(
+          90deg,
+          var(--accent-color),
+          var(--accent-dark)
+        );
         color: white;
       }
 
-      .btn-primary:hover {
-        transform: translateY(-3px);
-        box-shadow:
-          0 10px 15px -3px rgba(0, 0, 0, 0.1),
-          0 4px 6px -2px rgba(0, 0, 0, 0.05);
-        background: linear-gradient(90deg, #319795, var(--accent-color));
+      .btn-primary.success {
+        background: linear-gradient(90deg, var(--success-color), #2f855a);
+      }
+
+      .btn-primary:hover,
+      .btn-primary:focus {
+        transform: translateY(-4px);
+        box-shadow: 0 12px 20px -5px rgba(56, 178, 172, 0.4);
+      }
+
+      .btn-primary.success:hover {
+        box-shadow: 0 12px 20px -5px rgba(56, 161, 105, 0.4);
       }
 
       .btn-secondary {
         background-color: white;
         color: var(--primary-color);
         border: 2px solid var(--accent-color);
-        margin-right: 15px;
       }
 
-      .btn-secondary:hover {
+      .btn-secondary.success {
+        border-color: var(--success-color);
+        color: var(--success-color);
+      }
+
+      .btn-secondary:hover,
+      .btn-secondary:focus {
         background-color: #e6fffa;
+        transform: translateY(-2px);
       }
 
-      /* Steps */
-      .steps {
-        display: flex;
-        justify-content: space-between;
-        margin: 40px 0;
-        position: relative;
+      .btn-secondary.success:hover {
+        background-color: #f0fff4;
       }
 
-      .steps::before {
-        content: "";
-        position: absolute;
-        top: 20px;
-        right: 0;
-        width: 100%;
-        height: 3px;
-        background-color: #e2e8f0;
-        z-index: 1;
-      }
-
-      .step {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        position: relative;
-        z-index: 2;
-        flex: 1;
-      }
-
-      .step-number {
-        width: 40px;
-        height: 40px;
-        border-radius: 50%;
-        background-color: #e2e8f0;
-        color: var(--secondary-color);
-        display: flex;
-        justify-content: center;
-        align-items: center;
+      /* Code Display */
+      .code-display {
+        background-color: #f7fafc;
+        border: 2px dashed var(--accent-color);
+        border-radius: var(--border-radius-sm);
+        padding: 20px;
+        margin: 25px 0;
+        font-family: monospace;
+        font-size: clamp(1.5rem, 4vw, 2rem);
         font-weight: 700;
-        margin-bottom: 10px;
-        transition: var(--transition);
-      }
-
-      .step.active .step-number {
-        background-color: var(--accent-color);
-        color: white;
-        transform: scale(1.1);
-      }
-
-      .step-text {
-        font-size: 0.9rem;
+        color: var(--primary-color);
         text-align: center;
-        color: var(--secondary-color);
-        font-weight: 500;
+        letter-spacing: 8px;
       }
 
-      /* Footer Styles */
+      /* Note */
+      .note {
+        margin-top: clamp(15px, 4vw, 20px);
+        color: var(--text-light);
+        font-size: clamp(0.85rem, 2.2vw, 0.9rem);
+        text-align: center;
+      }
+
+      .note a {
+        color: var(--accent-color);
+        text-decoration: none;
+        font-weight: 600;
+      }
+
+      .note a:hover {
+        text-decoration: underline;
+      }
+
+      /* Footer */
       footer {
         background-color: #f7fafc;
-        padding: 25px 40px;
-        border-top: 1px solid #e2e8f0;
+        padding: clamp(16px, 3vw, 25px) clamp(16px, 4vw, 40px);
+        border-top: 1px solid var(--light-gray);
         text-align: center;
-        color: #718096;
-        font-size: 0.9rem;
+        color: var(--text-light);
+        font-size: clamp(0.8rem, 2vw, 0.9rem);
+        min-height: 90px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+      }
+
+      .footer-copyright {
+        margin-bottom: clamp(10px, 2vw, 15px);
       }
 
       .footer-links {
         display: flex;
         justify-content: center;
-        margin-top: 15px;
         flex-wrap: wrap;
+        gap: clamp(8px, 2vw, 15px);
       }
 
       .footer-links a {
         color: var(--accent-color);
         text-decoration: none;
-        margin: 0 10px;
         transition: var(--transition);
+        font-weight: 500;
+        padding: 4px 0;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
       }
 
-      .footer-links a:hover {
-        text-decoration: underline;
+      .footer-links a:hover,
+      .footer-links a:focus {
         color: var(--primary-color);
+        text-decoration: underline;
       }
 
-      /* Responsive Design */
-      @media (max-width: 768px) {
-        .root {
-          min-height: auto;
-          margin: 20px 0;
-        }
-
-        header {
-          padding: 25px 20px;
-        }
-
-        h1 {
-          font-size: 2rem;
-        }
-
-        main {
-          padding: 30px 20px;
-        }
-
-        .steps {
-          flex-direction: column;
-          gap: 25px;
-        }
-
-        .steps::before {
-          display: none;
-        }
-
-        .btn {
-          padding: 14px 30px;
-          font-size: 1.1rem;
-          display: block;
-          width: 100%;
-          margin-bottom: 15px;
-        }
-
-        .btn-secondary {
-          margin-right: 0;
-        }
-      }
-
-      /* Animation */
+      /* Animations */
       @keyframes fadeIn {
         from {
           opacity: 0;
@@ -374,45 +413,125 @@ export const BASE_TEMPLATE_MAIL = `
         }
       }
 
-      .animated {
-        animation: fadeIn 0.8s ease-out;
-      }
-
       @keyframes pulse {
         0% {
           transform: scale(1);
+          box-shadow: 0 10px 15px -3px rgba(56, 178, 172, 0.3);
         }
         50% {
           transform: scale(1.05);
+          box-shadow: 0 15px 20px -5px rgba(56, 178, 172, 0.4);
         }
         100% {
           transform: scale(1);
+          box-shadow: 0 10px 15px -3px rgba(56, 178, 172, 0.3);
         }
       }
 
-      .pulse {
-        animation: pulse 2s infinite;
+      /* Responsive */
+      @media (max-width: 480px) {
+        .btn-container {
+          flex-direction: column;
+        }
+
+        .btn {
+          width: 100%;
+          min-width: unset;
+        }
+
+        .logo-container {
+          flex-direction: column;
+          text-align: center;
+        }
+
+        .footer-links {
+          flex-direction: column;
+          gap: 8px;
+        }
       }
 
-      .btn-link {
-        text-decoration: none;
-        padding: 10px 30px;
-        border-radius: 10px;
-        color: #fff;
-        background: linear-gradient(
-          90deg,
-          var(--primary-color),
-          var(--secondary-color)
-        );
+      @media (max-width: 768px) {
+        body {
+          padding: 10px;
+        }
+
+        .root {
+          border-radius: 10px;
+        }
+
+        header {
+          padding: 18px 12px;
+        }
+
+        main {
+          padding: 20px 16px;
+        }
+      }
+
+      /* Dark Mode */
+      @media (prefers-color-scheme: dark) {
+        body {
+          background: linear-gradient(135deg, #1a202c 0%, #2d3748 100%);
+        }
+
+        .root {
+          background-color: #2d3748;
+          color: #e2e8f0;
+        }
+
+        .description,
+        h2 {
+          color: #e2e8f0;
+        }
+
+        .highlight {
+          background-color: #4a5568;
+          color: #e2e8f0;
+        }
+
+        .highlight.warning {
+          background-color: #744210;
+        }
+
+        .highlight.success {
+          background-color: #22543d;
+        }
+
+        .highlight.danger {
+          background-color: #742a2a;
+        }
+
+        .code-display {
+          background-color: #4a5568;
+          color: #e2e8f0;
+        }
+
+        footer {
+          background-color: #1a202c;
+          color: #a0aec0;
+        }
+      }
+
+      /* Reduced Motion */
+      @media (prefers-reduced-motion: reduce) {
+        * {
+          animation-duration: 0.01ms !important;
+          animation-iteration-count: 1 !important;
+          transition-duration: 0.01ms !important;
+        }
+
+        .icon-container {
+          animation: none;
+        }
       }
     </style>
   </head>
   <body>
-    <div class="root animated">
+    <div class="root">
       <header>
         <div class="logo-container">
           <div class="logo">م</div>
-          <div>
+          <div class="header-text">
             <h1>بريد عائلة مسعود</h1>
             <p class="subtitle">خدمة البريد الإلكتروني لعائلة مسعود - TITLE</p>
           </div>
@@ -420,34 +539,18 @@ export const BASE_TEMPLATE_MAIL = `
       </header>
 
       <main>
-        <div class="content">
-          <div class="icon-container pulse">
-            <span style="font-size: 48px">✉️</span>
-          </div>
-
-          <!-- CONTENT -->
-          CONTENT
-          <!-- END CONTENT -->
-
-          <p style="margin-top: 20px; color: #718096; font-size: 0.9rem">
-            إذا لم تطلب هذا البريد، يمكنك تجاهله بأمان. لمزيد من المساعدة، يرجى
-            الاتصال بـ
-            <a
-              href="#"
-              style="color: var(--accent-color); text-decoration: none"
-              >دعم عائلة مسعود</a
-            >
-          </p>
-        </div>
+        <div class="content">CONTENT</div>
       </main>
 
       <footer>
-        <p>© 2026 بريد عائلة مسعود. جميع الحقوق محفوظة.</p>
+        <p class="footer-copyright">
+          © 2026 بريد عائلة مسعود. جميع الحقوق محفوظة.
+        </p>
         <div class="footer-links">
-          <a href="#">سياسة الخصوصية</a>
-          <a href="#">شروط الاستخدام</a>
-          <a href="#">الدعم الفني</a>
-          <a href="#">اتصل بنا</a>
+          <a href="#"><i class="fas fa-shield-alt"></i> سياسة الخصوصية</a>
+          <a href="#"><i class="fas fa-file-contract"></i> شروط الاستخدام</a>
+          <a href="#"><i class="fas fa-headset"></i> الدعم الفني</a>
+          <a href="#"><i class="fas fa-envelope"></i> اتصل بنا</a>
         </div>
       </footer>
     </div>
@@ -456,57 +559,72 @@ export const BASE_TEMPLATE_MAIL = `
 `;
 
 export const VERIFY_MAIL = `
+<div class="icon-container">
+  <i class="fas fa-envelope"></i>
+</div>
 <h2>تأكيد البريد الإلكتروني</h2>
-
 <p class="description">
   شكراً لتسجيلك في بريد عائلة مسعود. لتفعيل حسابك، يرجى النقر على زر التأكيد
-  أدناه. هذا يساعدنا على التحقق من عنوان بريدك الإلكتروني وضمان أمان حسابك.
+  أدناه.
 </p>
-
 <div class="highlight">
-  <strong>ملاحظة:</strong> الرابط الموجود في هذا البريد الإلكتروني صالح لمدة
-  دقيقتين فقط. إذا انتهت صلاحية الرابط، يمكنك طلب رابط تأكيد جديد من خلال صفحة
-  الإعدادات.
+  <strong>ملاحظة:</strong> رابط التأكيد صالح لمدة دقيقتين فقط.
 </div>
-
-<div style="text-align: center">
-  <a href="URL" class="btn-link">تأكيد البريد الإلكتروني</a>
+<div class="btn-container">
+  <a href="URL" class="btn btn-primary">
+    <i class="fas fa-check-circle"></i>
+    تأكيد البريد الإلكتروني
+  </a>
 </div>
+<p class="note">إذا لم تطلب هذا البريد، يمكنك تجاهله بأمان.</p>
 `;
 
 export const VERIFY_CODE = `
-<h2>تأكيد البريد الإلكتروني</h2>
-
-<p class="description">
-  شكراً لتسجيلك في بريد عائلة مسعود. لتفعيل حسابك، يرجى النقر على زر التأكيد
-  أدناه. هذا يساعدنا على التحقق من عنوان بريدك الإلكتروني وضمان أمان حسابك.
-</p>
-
-<div class="highlight">
-  <strong>ملاحظة:</strong> الرابط الموجود في هذا البريد الإلكتروني صالح لمدة
-  دقيقتين فقط. إذا انتهت صلاحية الرابط، يمكنك طلب رابط تأكيد جديد من خلال صفحة
-  الإعدادات.
+<div class="icon-container">
+  <i class="fas fa-envelope"></i>
 </div>
-
-<p class="description">رمز التحقق: CODE</p>
+<h2>تأكيد البريد الإلكتروني</h2>
+<p class="description">
+  شكراً لتسجيلك في بريد عائلة مسعود. لتفعيل حسابك، يرجى استخدام رمز التحقق
+  أدناه.
+</p>
+<div class="highlight">
+  <strong>ملاحظة:</strong> رمز التحقق صالح لمدة دقيقتين فقط.
+</div>
+<div class="code-display">CODE</div>
+<p class="note">إذا لم تطلب هذا البريد، يمكنك تجاهله بأمان.</p>
 `;
 
 export const RESET_PASSWORD = `
+<div class="icon-container warning">
+  <i class="fas fa-key"></i>
+</div>
 <h2>تعيين كلمة مرور جديدة</h2>
-
 <p class="description">
   لقد تلقّينا طلباً لإعادة تعيين كلمة المرور الخاصة بحسابك. لإكمال العملية
-  وإنشاء كلمة مرور جديدة، يرجى النقر على زر التأكيد أدناه. إذا لم تقم بطلب إعادة
-  تعيين كلمة المرور، يمكنك تجاهل هذه الرسالة بأمان.
+  وإنشاء كلمة مرور جديدة، يرجى النقر على زر التأكيد أدناه.
 </p>
-
-<div class="highlight">
-  <strong>ملاحظة:</strong> الرابط الموجود في هذا البريد الإلكتروني صالح لمدة
-  دقيقتين فقط. إذا انتهت صلاحية الرابط، يمكنك طلب رابط تأكيد جديد من خلال صفحة
-  الإعدادات.
+<div class="highlight warning">
+  <strong>ملاحظة هامة:</strong> الرابط الموجود في هذا البريد الإلكتروني صالح
+  لمدة ساعتين فقط. إذا انتهت صلاحية الرابط، يمكنك طلب رابط تأكيد جديد من خلال
+  صفحة تسجيل الدخول.
 </div>
-
-<div style="text-align: center">
-  <a href="URL" class="btn-link">تعيين كلمة مرور جديدة</a>
+<div class="btn-container">
+  <a href="URL" class="btn btn-primary">
+    <i class="fas fa-lock"></i>
+    تعيين كلمة مرور جديدة
+  </a>
 </div>
+<p class="note">
+  إذا لم تطلب هذا البريد، يمكنك تجاهله بأمان. لمزيد من المساعدة، يرجى الاتصال بـ
+  <a href="#">دعم عائلة مسعود</a>
+</p>
+`;
+
+export const SUCCESS_RESET_PASSWORD = `
+<div class="icon-container warning">
+  <i class="fas fa-key"></i>
+</div>
+<h2>تعيين كلمة مرور جديدة</h2>
+<p class="description">تم تعيين كلمة مرور جديدة بنجاح</p>
 `;

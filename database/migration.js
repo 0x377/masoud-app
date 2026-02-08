@@ -15,6 +15,7 @@ class MigrationRunner {
     this.migrationsDir = path.join(__dirname, "migrations");
     this.seedersDir = path.join(__dirname, "seeders");
     this.db = null;
+    this.failedMigrations = [];
   }
 
   async initializeDatabase() {
@@ -30,6 +31,7 @@ class MigrationRunner {
         queueLimit: 0,
         timezone: "UTC",
         charset: "utf8mb4",
+        multipleStatements: true, // Allow multiple statements
       });
 
       console.log("✅ Database connected successfully");
@@ -58,10 +60,15 @@ class MigrationRunner {
   }
 
   async getExecutedMigrations() {
-    const [migrations] = await this.db.execute(
-      "SELECT name FROM migrations ORDER BY id ASC",
-    );
-    return migrations.map((m) => m.name);
+    try {
+      const [migrations] = await this.db.execute(
+        "SELECT name FROM migrations ORDER BY id ASC",
+      );
+      return migrations.map((m) => m.name);
+    } catch (error) {
+      console.error("❌ Error getting executed migrations:", error.message);
+      return [];
+    }
   }
 
   async getMigrationFiles() {
@@ -71,28 +78,43 @@ class MigrationRunner {
       await fs.mkdir(this.migrationsDir, { recursive: true });
     }
 
-    const files = await fs.readdir(this.migrationsDir);
-    return files
-      .filter((file) => file.endsWith(".js"))
-      .map((file) => ({
-        name: file.replace(".js", ""),
-        path: path.join(this.migrationsDir, file),
-      }))
-      .sort((a, b) => a.name.localeCompare(b.name));
+    try {
+      const files = await fs.readdir(this.migrationsDir);
+      return files
+        .filter((file) => file.endsWith(".js"))
+        .map((file) => ({
+          name: file.replace(".js", ""),
+          path: path.join(this.migrationsDir, file),
+        }))
+        .sort((a, b) => a.name.localeCompare(b.name));
+    } catch (error) {
+      console.error("❌ Error reading migration files:", error.message);
+      return [];
+    }
   }
 
   async getNextBatchNumber() {
-    const [[result]] = await this.db.execute(
-      "SELECT COALESCE(MAX(batch), 0) as max_batch FROM migrations",
-    );
-    return result.max_batch + 1;
+    try {
+      const [[result]] = await this.db.execute(
+        "SELECT COALESCE(MAX(batch), 0) as max_batch FROM migrations",
+      );
+      return result.max_batch + 1;
+    } catch (error) {
+      console.error("❌ Error getting batch number:", error.message);
+      return 1;
+    }
   }
 
   async getCurrentBatchNumber() {
-    const [[result]] = await this.db.execute(
-      "SELECT COALESCE(MAX(batch), 0) as max_batch FROM migrations",
-    );
-    return result.max_batch;
+    try {
+      const [[result]] = await this.db.execute(
+        "SELECT COALESCE(MAX(batch), 0) as max_batch FROM migrations",
+      );
+      return result.max_batch;
+    } catch (error) {
+      console.error("❌ Error getting current batch:", error.message);
+      return 0;
+    }
   }
 
   async createMigration(name) {
@@ -139,7 +161,28 @@ export const down = async (queryInterface) => {
     console.log(`📁 Location: ${filePath}`);
   }
 
-  async runMigrations(direction = "up") {
+  async executeSafe(queryInterface, sql, migrationName) {
+    try {
+      console.log(`  Executing: ${sql.substring(0, 100)}...`);
+      await queryInterface.execute(sql);
+      return true;
+    } catch (error) {
+      // Check if it's a "already exists" error
+      if (
+        error.message.includes("already exists") ||
+        error.message.includes("Duplicate") ||
+        error.message.includes("exists")
+      ) {
+        console.warn(`  ⚠️  Warning (non-critical): ${error.message}`);
+        return true; // Continue despite this error
+      } else {
+        console.error(`  ❌ Error in migration ${migrationName}:`, error.message);
+        throw error;
+      }
+    }
+  }
+
+  async runMigrations(direction = "up", { skipErrors = false, specificMigration = null } = {}) {
     await this.initialize();
 
     const executed = await this.getExecutedMigrations();
@@ -147,7 +190,15 @@ export const down = async (queryInterface) => {
 
     let migrationsToRun;
 
-    if (direction === "up") {
+    if (specificMigration) {
+      // Run specific migration only
+      const migrationFile = files.find(f => f.name === specificMigration);
+      if (!migrationFile) {
+        console.error(`❌ Migration not found: ${specificMigration}`);
+        return [];
+      }
+      migrationsToRun = [migrationFile];
+    } else if (direction === "up") {
       migrationsToRun = files.filter((file) => !executed.includes(file.name));
     } else {
       migrationsToRun = files
@@ -166,11 +217,16 @@ export const down = async (queryInterface) => {
         : await this.getCurrentBatchNumber();
 
     const results = [];
+    this.failedMigrations = [];
+
+    console.log(`🚀 Starting migrations (${direction.toUpperCase()})...`);
+    console.log(`📋 Total migrations to run: ${migrationsToRun.length}`);
 
     for (const migration of migrationsToRun) {
-      try {
-        console.log(`🔄 Running migration ${direction}: ${migration.name}`);
+      console.log(`\n═══════════════════════════════════════════════════`);
+      console.log(`🔄 Processing: ${migration.name}`);
 
+      try {
         // Import the migration module
         const migrationUrl = new URL(`file://${migration.path}`);
         const migrationModule = await import(migrationUrl.href);
@@ -180,11 +236,49 @@ export const down = async (queryInterface) => {
         try {
           await connection.beginTransaction();
 
+          // Create a query interface with error handling
+          const safeQueryInterface = {
+            execute: async (sql, params) => {
+              if (skipErrors) {
+                try {
+                  console.log(`  Executing: ${sql.substring(0, 100)}...`);
+                  const result = await connection.execute(sql, params);
+                  return result;
+                } catch (error) {
+                  // Check if it's a "already exists" or similar non-critical error
+                  const errorMsg = error.message.toLowerCase();
+                  const isNonCritical = 
+                    errorMsg.includes("already exists") ||
+                    errorMsg.includes("duplicate") ||
+                    errorMsg.includes("exists") ||
+                    errorMsg.includes("drop table if exists") ||
+                    errorMsg.includes("drop procedure if exists") ||
+                    errorMsg.includes("drop view if exists") ||
+                    errorMsg.includes("drop trigger if exists") ||
+                    errorMsg.includes("create table if not exists") ||
+                    errorMsg.includes("create or replace");
+
+                  if (isNonCritical) {
+                    console.warn(`  ⚠️  Warning (non-critical): ${error.message}`);
+                    return [[]]; // Return empty result to continue
+                  } else {
+                    throw error;
+                  }
+                }
+              } else {
+                return await connection.execute(sql, params);
+              }
+            }
+          };
+
           if (direction === "up") {
             if (typeof migrationModule.up === "function") {
-              await migrationModule.up(connection);
+              console.log(`  Running UP function...`);
+              await migrationModule.up(safeQueryInterface);
+              
+              // Only mark as executed if no errors occurred
               await connection.execute(
-                "INSERT INTO migrations (name, batch) VALUES (?, ?)",
+                "INSERT IGNORE INTO migrations (name, batch) VALUES (?, ?)",
                 [migration.name, batch],
               );
             } else {
@@ -192,7 +286,9 @@ export const down = async (queryInterface) => {
             }
           } else {
             if (typeof migrationModule.down === "function") {
-              await migrationModule.down(connection);
+              console.log(`  Running DOWN function...`);
+              await migrationModule.down(safeQueryInterface);
+              
               await connection.execute(
                 "DELETE FROM migrations WHERE name = ?",
                 [migration.name],
@@ -207,7 +303,24 @@ export const down = async (queryInterface) => {
           console.log(`✅ Migration ${direction} completed: ${migration.name}`);
         } catch (error) {
           await connection.rollback();
-          throw error;
+          
+          if (skipErrors) {
+            console.error(`  ⚠️  Migration failed but skipping: ${migration.name}`, error.message);
+            results.push({
+              name: migration.name,
+              status: "skipped",
+              error: error.message,
+            });
+            this.failedMigrations.push({
+              name: migration.name,
+              error: error.message
+            });
+            
+            // Try to continue with next migration
+            continue;
+          } else {
+            throw error;
+          }
         } finally {
           connection.release();
         }
@@ -218,8 +331,29 @@ export const down = async (queryInterface) => {
           status: "failed",
           error: error.message,
         });
-        throw error;
+        this.failedMigrations.push({
+          name: migration.name,
+          error: error.message
+        });
+        
+        if (!skipErrors) {
+          throw error;
+        }
       }
+    }
+
+    // Print summary
+    console.log("\n═══════════════════════════════════════════════════");
+    console.log("📊 MIGRATION SUMMARY:");
+    console.log(`✅ Successful: ${results.filter(r => r.status === "success").length}`);
+    console.log(`⚠️  Skipped: ${results.filter(r => r.status === "skipped").length}`);
+    console.log(`❌ Failed: ${results.filter(r => r.status === "failed").length}`);
+    
+    if (this.failedMigrations.length > 0) {
+      console.log("\n📋 Failed Migrations:");
+      this.failedMigrations.forEach(fm => {
+        console.log(`   ❌ ${fm.name}: ${fm.error}`);
+      });
     }
 
     return results;
@@ -247,9 +381,11 @@ export const down = async (queryInterface) => {
       return;
     }
 
+    console.log("🌱 Running seeders...");
+
     for (const seeder of seeders) {
       try {
-        console.log(`🌱 Running seeder: ${seeder.name}`);
+        console.log(`  Processing: ${seeder.name}`);
 
         const seederUrl = new URL(`file://${seeder.path}`);
         const seederModule = await import(seederUrl.href);
@@ -262,12 +398,13 @@ export const down = async (queryInterface) => {
           if (typeof seederModule.up === "function") {
             await seederModule.up(connection);
             await connection.commit();
-            console.log(`✅ Seeder completed: ${seeder.name}`);
+            console.log(`  ✅ Seeder completed: ${seeder.name}`);
           } else {
             throw new Error('Seeder module must export an "up" function');
           }
         } catch (error) {
           await connection.rollback();
+          console.error(`  ❌ Seeder failed: ${seeder.name}`, error.message);
           throw error;
         } finally {
           connection.release();
@@ -279,27 +416,41 @@ export const down = async (queryInterface) => {
     }
   }
 
-  // async getStatus() {
-  //   await this.initialize();
+  async getStatus() {
+    await this.initialize();
 
-  //   const executed = await this.getExecutedMigrations();
-  //   const files = await this.getMigrationFiles();
+    const executed = await this.getExecutedMigrations();
+    const files = await this.getMigrationFiles();
 
-  //   const status = files.map(file => ({
-  //     name: file.name,
-  //     status: executed.includes(file.name) ? 'applied' : 'pending',
-  //     appliedAt: executed.includes(file.name) ?
-  //       (await this.db.execute('SELECT executed_at FROM migrations WHERE name = ?', [file.name]))[0][0]?.executed_at :
-  //       null
-  //   }));
+    const status = [];
+    for (const file of files) {
+      let appliedAt = null;
+      if (executed.includes(file.name)) {
+        try {
+          const [[result]] = await this.db.execute(
+            "SELECT executed_at FROM migrations WHERE name = ?",
+            [file.name],
+          );
+          appliedAt = result?.executed_at || null;
+        } catch (error) {
+          console.error(`Error getting execution time for ${file.name}:`, error.message);
+        }
+      }
 
-  //   return {
-  //     total: files.length,
-  //     applied: executed.length,
-  //     pending: files.length - executed.length,
-  //     migrations: status
-  //   };
-  // }
+      status.push({
+        name: file.name,
+        status: executed.includes(file.name) ? "applied" : "pending",
+        appliedAt,
+      });
+    }
+
+    return {
+      total: files.length,
+      applied: executed.length,
+      pending: files.length - executed.length,
+      migrations: status,
+    };
+  }
 
   async close() {
     if (this.db) {
@@ -313,17 +464,32 @@ export const down = async (queryInterface) => {
 async function main() {
   const command = process.argv[2];
   const arg = process.argv[3];
+  const option = process.argv[4];
 
   const runner = new MigrationRunner();
 
   try {
     switch (command) {
       case "up":
-        await runner.runMigrations("up");
+        if (arg === "--skip-errors" || arg === "-s") {
+          await runner.runMigrations("up", { skipErrors: true });
+        } else if (arg) {
+          // Run specific migration
+          await runner.runMigrations("up", { specificMigration: arg });
+        } else {
+          await runner.runMigrations("up");
+        }
         break;
 
       case "down":
-        await runner.runMigrations("down");
+        if (arg === "--skip-errors" || arg === "-s") {
+          await runner.runMigrations("down", { skipErrors: true });
+        } else if (arg) {
+          // Rollback specific migration
+          await runner.runMigrations("down", { specificMigration: arg });
+        } else {
+          await runner.runMigrations("down");
+        }
         break;
 
       case "create":
@@ -348,34 +514,60 @@ async function main() {
         console.log("📋 Migration List:");
         status.migrations.forEach((migration) => {
           const statusIcon = migration.status === "applied" ? "✅" : "⏳";
-          console.log(`${statusIcon} ${migration.name} - ${migration.status}`);
+          const date = migration.appliedAt ? new Date(migration.appliedAt).toLocaleString() : "Not applied";
+          console.log(`${statusIcon} ${migration.name} - ${migration.status} (${date})`);
         });
         break;
 
       case "reset":
         console.log("⚠️  Resetting all migrations...");
-        await runner.runMigrations("down");
+        const confirm = option === "--force" || option === "-f";
+        if (!confirm) {
+          console.log("🔒 Use --force or -f to confirm reset");
+          const readline = (await import('readline')).createInterface({
+            input: process.stdin,
+            output: process.stdout
+          });
+          
+          const answer = await new Promise(resolve => {
+            readline.question('Are you sure you want to reset ALL migrations? (yes/no): ', resolve);
+          });
+          readline.close();
+          
+          if (answer.toLowerCase() !== 'yes') {
+            console.log('Reset cancelled');
+            break;
+          }
+        }
+        
+        await runner.runMigrations("down", { skipErrors: true });
         console.log("✅ All migrations rolled back");
+        break;
+
+      case "rerun":
+        if (!arg) {
+          console.error("❌ Please provide a migration name to rerun");
+          process.exit(1);
+        }
+        console.log(`🔄 Rerunning migration: ${arg}`);
+        // First rollback
+        await runner.runMigrations("down", { specificMigration: arg, skipErrors: true });
+        // Then run again
+        await runner.runMigrations("up", { specificMigration: arg, skipErrors: true });
         break;
 
       default:
         console.log("🚀 Migration Runner Commands:");
-        console.log(
-          "  npm run migrate:up                    Run pending migrations",
-        );
-        console.log(
-          "  npm run migrate:down                  Rollback last migration",
-        );
-        console.log(
-          "  npm run migrate:create <name>         Create new migration",
-        );
+        console.log("  npm run migrate:up                    Run pending migrations");
+        console.log("  npm run migrate:up --skip-errors      Run migrations, skip errors");
+        console.log("  npm run migrate:up <migration_name>   Run specific migration");
+        console.log("  npm run migrate:down                  Rollback last migration");
+        console.log("  npm run migrate:down --skip-errors    Rollback, skip errors");
+        console.log("  npm run migrate:create <name>         Create new migration");
         console.log("  npm run migrate:seed                  Run seeders");
-        console.log(
-          "  npm run migrate:status                Show migration status",
-        );
-        console.log(
-          "  npm run migrate:reset                 Rollback all migrations",
-        );
+        console.log("  npm run migrate:status                Show migration status");
+        console.log("  npm run migrate:reset                 Rollback all migrations");
+        console.log("  npm run migrate:rerun <name>          Rerun specific migration");
         break;
     }
   } catch (error) {
@@ -385,5 +577,11 @@ async function main() {
     await runner.close();
   }
 }
+
+// Handle unhandled rejections
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('❌ Unhandled Rejection at:', promise, 'reason:', reason);
+  process.exit(1);
+});
 
 main();
